@@ -15,7 +15,12 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
     Tries freshness="pd" (past day) first; falls back to "pw" (past week)
     if fewer than 3 results are returned.
     """
-    query = f'"{company_name} stock news" OR "{ticker} stock"'
+    # For Canadian/ETF tickers, use simplified search terms
+    clean_ticker = ticker.replace(".TO", "")
+    if ".TO" in ticker:
+        query = f'"TSX 60" OR "S&P TSX" OR "Canadian stock market" OR "iShares XIU"'
+    else:
+        query = f'"{company_name} stock news" OR "{clean_ticker} stock"'
     headers = {
         "X-Subscription-Token": brave_api_key,
         "Accept": "application/json",

@@ -45,7 +45,7 @@ CRITICAL FORMATTING RULES — you must follow these exactly:
 - Be specific, direct, and insightful. No fluff."""
         response = client.messages.create(
             model=model,
-            max_tokens=400,
+            max_tokens=700,
             messages=[{"role": "user", "content": prompt}],
         )
         return response.content[0].text.strip()

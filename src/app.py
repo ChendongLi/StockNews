@@ -41,17 +41,21 @@ def run(argv: Sequence[str] | None = None) -> int:
         for ticker in config.stocks
     }
 
-    print("Generating AI summaries...")
+    no_ai = "--no-ai" in args
     summaries: dict[str, str] = {}
-    for ticker, info in config.stocks.items():
-        summaries[ticker] = summarize_ticker_news(
-            ticker=ticker,
-            company_name=info["name"],
-            items=news_by_ticker[ticker],
-            api_key=config.anthropic_api_key,
-            model=config.anthropic_model,
-        )
-        print(f"  {ticker} complete")
+    if no_ai:
+        print("Skipping AI summaries (--no-ai)")
+    else:
+        print("Generating AI summaries...")
+        for ticker, info in config.stocks.items():
+            summaries[ticker] = summarize_ticker_news(
+                ticker=ticker,
+                company_name=info["name"],
+                items=news_by_ticker[ticker],
+                api_key=config.anthropic_api_key,
+                model=config.anthropic_model,
+            )
+            print(f"  {ticker} complete")
 
     html = build_html(
         stocks=config.stocks,
