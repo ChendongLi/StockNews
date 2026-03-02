@@ -36,7 +36,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     }
 
     print("Fetching price changes...")
-    price_changes: dict[str, float | None] = {
+    price_changes = {
         ticker: fetch_price_change(ticker)
         for ticker in config.stocks
     }

@@ -62,7 +62,7 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
     return []
 
 
-def fetch_price_change(ticker: str) -> float | None:
+def fetch_price_change(ticker):  # returns float or None
     """Return today's price change % vs previous close. Returns None on error."""
     try:
         import yfinance as yf
