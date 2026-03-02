@@ -52,3 +52,18 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
             logging.error("%s fetch failed (freshness=%s): %s", ticker, freshness, exc)
 
     return []
+
+
+def fetch_price_change(ticker: str) -> float | None:
+    """Return today's price change % vs previous close. Returns None on error."""
+    try:
+        import yfinance as yf
+        t = yf.Ticker(ticker)
+        info = t.fast_info
+        current = info.last_price
+        prev = info.previous_close
+        if current and prev:
+            return round((current - prev) / prev * 100, 2)
+    except Exception as exc:
+        logging.error("%s price change failed: %s", ticker, exc)
+    return None

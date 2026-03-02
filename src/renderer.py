@@ -10,6 +10,7 @@ def build_html(
     colors: dict[str, str],
     news_by_ticker: dict[str, list[dict]],
     summaries: dict[str, str],
+    price_changes: dict[str, float | None] | None = None,
 ) -> str:
     """Build the HTML body for the stock digest email."""
     today = datetime.now().strftime("%B %d, %Y")
@@ -21,6 +22,19 @@ def build_html(
         color = colors.get(ticker, "#334155")
         items = news_by_ticker.get(ticker, [])
         summary = summaries.get(ticker, "")
+
+        change = (price_changes or {}).get(ticker)
+        if change is not None:
+            chg_color = "#16a34a" if change >= 0 else "#dc2626"
+            chg_sign = "+" if change >= 0 else ""
+            price_pill = (
+                f'<span style="background:{chg_color}22;color:{chg_color};'
+                f'padding:3px 9px;border-radius:10px;font-size:12px;'
+                f'font-weight:700;margin-left:8px;vertical-align:middle">'
+                f'{chg_sign}{change}%</span>'
+            )
+        else:
+            price_pill = ""
 
         currency_label = (
             f'<span style="font-size:11px;font-weight:600;color:{color};'
@@ -73,7 +87,7 @@ def build_html(
             '<div style="margin-bottom:36px;padding-bottom:28px;'
             'border-bottom:1px solid #f1f5f9">'
             f'<h2 style="margin:0 0 14px;font-size:19px;color:#0f172a">'
-            f'{badge}{currency_label} &nbsp;{name}</h2>'
+            f'{badge}{price_pill}{currency_label} &nbsp;{name}</h2>'
             f"{summary_box}"
             f'<ul style="padding:0;margin:0">{rows}</ul>'
             "</div>"

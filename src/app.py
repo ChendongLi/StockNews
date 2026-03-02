@@ -7,7 +7,7 @@ from typing import Sequence
 
 from src.config import AppConfig, configure_logging
 from src.emailer import send_email
-from src.fetcher import fetch_news
+from src.fetcher import fetch_news, fetch_price_change
 from src.renderer import build_html
 from src.summarizer import summarize_ticker_news
 
@@ -35,6 +35,12 @@ def run(argv: Sequence[str] | None = None) -> int:
         for ticker, info in config.stocks.items()
     }
 
+    print("Fetching price changes...")
+    price_changes: dict[str, float | None] = {
+        ticker: fetch_price_change(ticker)
+        for ticker in config.stocks
+    }
+
     print("Generating AI summaries...")
     summaries: dict[str, str] = {}
     for ticker, info in config.stocks.items():
@@ -52,6 +58,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         colors=config.colors,
         news_by_ticker=news_by_ticker,
         summaries=summaries,
+        price_changes=price_changes,
     )
     send_email(html, config=config, test_mode=test_mode)
     return 0
