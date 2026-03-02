@@ -1,6 +1,6 @@
 # StockNews 📈
 
-A daily stock news emailer that fetches relevant headlines via **Brave Search**, generates concise **AI-powered analysis**, and delivers a clean HTML email every morning.
+A daily stock news emailer that fetches relevant headlines via **Brave Search**, generates concise **AI-powered analysis**, and delivers a clean HTML email every weekday morning — fully automated via **GitHub Actions** (no local server needed).
 
 ## What It Does
 
@@ -26,22 +26,43 @@ For each tracked stock, StockNews:
 
 ```
 StockNews/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml       # Runs on every push/PR — smoke test
+│       └── daily.yml    # Runs Mon–Fri 8 AM PT — sends email
 ├── src/
-│   ├── app.py          # Orchestration — fetch, summarize, render, send
-│   ├── config.py       # Stock list, colors, env var loading
-│   ├── fetcher.py      # Brave Search API + yfinance price change
-│   ├── summarizer.py   # Claude AI analysis (HTML output)
-│   ├── renderer.py     # HTML email builder
-│   └── emailer.py      # Gmail SMTP sender
+│   ├── app.py           # Orchestration — fetch, summarize, render, send
+│   ├── config.py        # Stock list, colors, env var loading
+│   ├── fetcher.py       # Brave Search API + yfinance price change
+│   ├── summarizer.py    # Claude AI analysis (HTML output)
+│   ├── renderer.py      # HTML email builder
+│   └── emailer.py       # Gmail SMTP sender
 ├── docs/
 │   └── architecture.md
-├── main.py             # Entry point
+├── main.py              # Entry point
 ├── requirements.txt
 ├── .env.example
 └── .gitignore
 ```
 
-## Setup
+## CI/CD (GitHub Actions)
+
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
+| `daily.yml` | Mon–Fri 8 AM PT (or manual) | Fetches news, generates AI analysis, sends email |
+
+### GitHub Secrets (stored encrypted, never in code)
+
+| Secret | Description |
+|--------|-------------|
+| `GMAIL_USER` | Gmail sender address |
+| `GMAIL_APP_PASSWORD` | [Gmail App Password](https://myaccount.google.com/apppasswords) |
+| `RECIPIENTS` | Comma-separated recipient emails |
+| `ANTHROPIC_API_KEY` | [Anthropic API key](https://console.anthropic.com/settings/keys) |
+| `BRAVE_API_KEY` | [Brave Search API key](https://api.search.brave.com) (free tier: 2,000 req/month) |
+
+## Local Development
 
 ### 1. Install dependencies
 ```bash
@@ -53,47 +74,28 @@ pip install -r requirements.txt
 ### 2. Configure environment
 ```bash
 cp .env.example .env
+# Fill in your credentials
 ```
 
-Fill in `.env`:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GMAIL_USER` | Yes | Gmail sender address |
-| `GMAIL_APP_PASSWORD` | Yes | [Gmail App Password](https://myaccount.google.com/apppasswords) |
-| `RECIPIENTS` | Yes | Comma-separated recipient emails |
-| `ANTHROPIC_API_KEY` | Yes | [Anthropic API key](https://console.anthropic.com/settings/keys) for AI analysis |
-| `BRAVE_API_KEY` | Yes | [Brave Search API key](https://api.search.brave.com) (free tier: 2,000 req/month) |
-| `ANTHROPIC_MODEL` | No | Defaults to `claude-haiku-4-5-20251001` |
-| `LOG_FILE` | No | Defaults to `logs/stock_news.log` |
-
-## Usage
+### 3. Run locally
 
 ```bash
 # Send live email
 python main.py
 
-# Test mode — prints HTML to stdout, no email sent
+# Test mode — renders HTML to stdout, no email sent
 python main.py --test
 
 # Skip AI analysis (faster, for debugging)
 python main.py --no-ai
 ```
 
-## Schedule Daily at 8 AM PT
-
-Add this cron job (8 AM PT = 16:00 UTC):
-```bash
-0 16 * * * cd /Users/yourname/Projects/StockNews && /usr/bin/python3 main.py >> logs/stock_news.log 2>&1
-```
-
 ## Email Design
 
 - Dark gradient header with date and ticker list
 - Per-stock section with:
-  - Color-coded ticker badge
-  - **Price change % pill** (green = up, red = down)
+  - Color-coded ticker badge + **price change % pill** (🟢 up / 🔴 down)
   - Currency label (USD or CAD)
-  - AI analysis box (theme, significance, outlook)
-  - Top 3 news links with source and description
+  - AI analysis box: theme, significance, outlook (~100 words)
+  - Top 3 news links with source, date, and description
 - Powered by Brave Search + Claude AI
