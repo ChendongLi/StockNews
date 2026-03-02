@@ -7,7 +7,7 @@ from typing import Sequence
 
 from src.config import AppConfig, configure_logging
 from src.emailer import send_email
-from src.fetcher import fetch_news
+from src.fetcher import fetch_news, fetch_price_change
 from src.renderer import build_html
 from src.summarizer import summarize_ticker_news
 
@@ -31,27 +31,38 @@ def run(argv: Sequence[str] | None = None) -> int:
     logging.info("Run started%s", " [TEST]" if test_mode else "")
 
     news_by_ticker = {
-        ticker: fetch_news(ticker, config.rss_url) for ticker in config.stocks.keys()
+        ticker: fetch_news(ticker, info["name"], config.brave_api_key)
+        for ticker, info in config.stocks.items()
     }
 
-    print("Generating AI summaries...")
+    print("Fetching price changes...")
+    price_changes: dict[str, float | None] = {
+        ticker: fetch_price_change(ticker)
+        for ticker in config.stocks
+    }
+
+    no_ai = "--no-ai" in args
     summaries: dict[str, str] = {}
-    for ticker, name in config.stocks.items():
-        summaries[ticker] = summarize_ticker_news(
-            ticker=ticker,
-            company_name=name,
-            items=news_by_ticker[ticker],
-            api_key=config.anthropic_api_key,
-            model=config.anthropic_model,
-        )
-        print(f"  {ticker} complete")
+    if no_ai:
+        print("Skipping AI summaries (--no-ai)")
+    else:
+        print("Generating AI summaries...")
+        for ticker, info in config.stocks.items():
+            summaries[ticker] = summarize_ticker_news(
+                ticker=ticker,
+                company_name=info["name"],
+                items=news_by_ticker[ticker],
+                api_key=config.anthropic_api_key,
+                model=config.anthropic_model,
+            )
+            print(f"  {ticker} complete")
 
     html = build_html(
         stocks=config.stocks,
         colors=config.colors,
         news_by_ticker=news_by_ticker,
         summaries=summaries,
+        price_changes=price_changes,
     )
     send_email(html, config=config, test_mode=test_mode)
     return 0
-

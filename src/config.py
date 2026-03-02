@@ -9,11 +9,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-DEFAULT_STOCKS = {
-    "QQQ": "Invesco QQQ ETF",
-    "NVDA": "Nvidia",
-    "TSLA": "Tesla",
-    "BABA": "Alibaba",
+DEFAULT_STOCKS: dict[str, dict] = {
+    "QQQ": {"name": "Invesco QQQ ETF", "section": "US Market", "currency": "USD"},
+    "NVDA": {"name": "Nvidia", "section": "US Tech", "currency": "USD"},
+    "TSLA": {"name": "Tesla", "section": "US Tech", "currency": "USD"},
+    "BABA": {"name": "Alibaba", "section": "Global Market", "currency": "USD"},
+    "MSFT": {"name": "Microsoft", "section": "US Tech", "currency": "USD"},
+    "BRK-B": {"name": "Berkshire Hathaway", "section": "US Market", "currency": "USD"},
+    "XIU.TO": {"name": "iShares S&P/TSX 60 ETF", "section": "Canadian Market", "currency": "CAD"},
 }
 
 DEFAULT_COLORS = {
@@ -21,6 +24,9 @@ DEFAULT_COLORS = {
     "NVDA": "#22c55e",
     "TSLA": "#ef4444",
     "BABA": "#f97316",
+    "MSFT": "#0ea5e9",
+    "BRK-B": "#ca8a04",
+    "XIU.TO": "#dc2626",
 }
 
 
@@ -28,10 +34,10 @@ DEFAULT_COLORS = {
 class AppConfig:
     """Container for runtime configuration."""
 
-    stocks: dict[str, str]
+    stocks: dict[str, dict]
     colors: dict[str, str]
     recipients: list[str]
-    rss_url: str
+    brave_api_key: str
     smtp_host: str
     smtp_port: int
     gmail_user: str
@@ -52,10 +58,7 @@ class AppConfig:
             stocks=DEFAULT_STOCKS,
             colors=DEFAULT_COLORS,
             recipients=recipients,
-            rss_url=os.getenv(
-                "RSS_URL",
-                "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US",
-            ),
+            brave_api_key=os.getenv("BRAVE_API_KEY", "BSA5-CTjN2peswcv-cozXKUOUAKPbMZ"),
             smtp_host=os.getenv("SMTP_HOST", "smtp.gmail.com"),
             smtp_port=int(os.getenv("SMTP_PORT", "465")),
             gmail_user=os.getenv("GMAIL_USER", ""),
@@ -75,4 +78,3 @@ def configure_logging(log_file: str) -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
-
