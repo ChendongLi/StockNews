@@ -19,6 +19,9 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
     clean_ticker = ticker.replace(".TO", "")
     if ".TO" in ticker:
         query = f'"TSX 60" OR "S&P TSX" OR "Canadian stock market" OR "iShares XIU"'
+    elif "-" in ticker:
+        # e.g. BRK-B → search by company name
+        query = f'"{company_name} stock news" OR "{company_name} stock"'
     else:
         query = f'"{company_name} stock news" OR "{clean_ticker} stock"'
     headers = {

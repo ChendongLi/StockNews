@@ -14,6 +14,8 @@ DEFAULT_STOCKS: dict[str, dict] = {
     "NVDA": {"name": "Nvidia", "section": "US Tech", "currency": "USD"},
     "TSLA": {"name": "Tesla", "section": "US Tech", "currency": "USD"},
     "BABA": {"name": "Alibaba", "section": "Global Market", "currency": "USD"},
+    "MSFT": {"name": "Microsoft", "section": "US Tech", "currency": "USD"},
+    "BRK-B": {"name": "Berkshire Hathaway", "section": "US Market", "currency": "USD"},
     "XIU.TO": {"name": "iShares S&P/TSX 60 ETF", "section": "Canadian Market", "currency": "CAD"},
 }
 
@@ -22,6 +24,8 @@ DEFAULT_COLORS = {
     "NVDA": "#22c55e",
     "TSLA": "#ef4444",
     "BABA": "#f97316",
+    "MSFT": "#0ea5e9",
+    "BRK-B": "#ca8a04",
     "XIU.TO": "#dc2626",
 }
 
