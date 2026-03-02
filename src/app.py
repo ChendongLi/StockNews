@@ -31,15 +31,16 @@ def run(argv: Sequence[str] | None = None) -> int:
     logging.info("Run started%s", " [TEST]" if test_mode else "")
 
     news_by_ticker = {
-        ticker: fetch_news(ticker, config.rss_url) for ticker in config.stocks.keys()
+        ticker: fetch_news(ticker, info["name"], config.brave_api_key)
+        for ticker, info in config.stocks.items()
     }
 
     print("Generating AI summaries...")
     summaries: dict[str, str] = {}
-    for ticker, name in config.stocks.items():
+    for ticker, info in config.stocks.items():
         summaries[ticker] = summarize_ticker_news(
             ticker=ticker,
-            company_name=name,
+            company_name=info["name"],
             items=news_by_ticker[ticker],
             api_key=config.anthropic_api_key,
             model=config.anthropic_model,
@@ -54,4 +55,3 @@ def run(argv: Sequence[str] | None = None) -> int:
     )
     send_email(html, config=config, test_mode=test_mode)
     return 0
-
