@@ -99,3 +99,12 @@ python main.py --no-ai
   - AI analysis box: theme, significance, outlook (~100 words)
   - Top 3 news links with source, date, and description
 - Powered by Brave Search + Claude AI
+
+## PR Workflow
+
+All changes go through pull requests — direct commits to `main` are blocked.
+
+1. Changes are made on a feature branch
+2. A PR is opened with a description of what changed
+3. CI must pass (smoke test)
+4. Owner approves → merges
