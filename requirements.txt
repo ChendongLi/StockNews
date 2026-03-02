@@ -2,3 +2,4 @@ feedparser
 python-dotenv
 anthropic
 requests
+yfinance

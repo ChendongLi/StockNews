@@ -10,7 +10,7 @@ def build_html(
     colors: dict[str, str],
     news_by_ticker: dict[str, list[dict]],
     summaries: dict[str, str],
-    price_changes: dict[str, float | None] | None = None,
+    price_changes=None,
 ) -> str:
     """Build the HTML body for the stock digest email."""
     today = datetime.now().strftime("%B %d, %Y")
