@@ -29,7 +29,7 @@ StockNews/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml       # Runs on every push/PR — smoke test
-│       └── daily.yml    # Runs Mon–Fri 8 AM PT — sends email
+│       └── daily.yml    # Runs Mon–Fri 7 AM PT — sends email
 ├── src/
 │   ├── app.py           # Orchestration — fetch, summarize, render, send
 │   ├── config.py        # Stock list, colors, env var loading
@@ -50,7 +50,7 @@ StockNews/
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
-| `daily.yml` | Mon–Fri 8 AM PT (or manual) | Fetches news, generates AI analysis, sends email |
+| `daily.yml` | Mon–Fri 7 AM PT (or manual) | Fetches news, generates AI analysis, sends email |
 
 ### GitHub Secrets (stored encrypted, never in code)
 
