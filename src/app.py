@@ -16,8 +16,8 @@ def validate_config(config: AppConfig, test_mode: bool) -> None:
     """Validate required settings before running."""
     if not config.recipients:
         raise ValueError("Set RECIPIENTS in .env (comma-separated emails).")
-    if not test_mode and (not config.gmail_user or not config.gmail_app_password):
-        raise ValueError("Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.")
+    if not test_mode and not config.agentmail_api_key:
+        raise ValueError("Set AGENTMAIL_API_KEY in .env.")
 
 
 def run(argv: Sequence[str] | None = None) -> int:

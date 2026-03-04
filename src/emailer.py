@@ -1,18 +1,15 @@
-"""Email sending utilities."""
+"""Email sending utilities via AgentMail."""
 
 from __future__ import annotations
 
 import logging
-import smtplib
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
-from src.config import AppConfig
+from agentmail import AgentMail
 
 
-def send_email(html: str, config: AppConfig, test_mode: bool = False) -> None:
-    """Send the HTML digest email or print it in test mode."""
+def send_email(html: str, config, test_mode: bool = False) -> None:
+    """Send the HTML digest email via AgentMail, or print in test mode."""
     subject = f"Daily Stock News - {datetime.now().strftime('%b %d, %Y')}"
 
     if test_mode:
@@ -21,16 +18,22 @@ def send_email(html: str, config: AppConfig, test_mode: bool = False) -> None:
         print(html)
         return
 
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"] = config.gmail_user
-    message["To"] = ", ".join(config.recipients)
-    message.attach(MIMEText(html, "html"))
+    client = AgentMail(api_key=config.agentmail_api_key)
 
-    with smtplib.SMTP_SSL(config.smtp_host, config.smtp_port) as smtp:
-        smtp.login(config.gmail_user, config.gmail_app_password)
-        smtp.sendmail(config.gmail_user, config.recipients, message.as_string())
+    # Reuse existing inbox or create one if none exist
+    existing = client.inboxes.list()
+    if existing.inboxes:
+        inbox_id = existing.inboxes[0].inbox_id
+    else:
+        inbox_id = client.inboxes.create().inbox_id
+
+    for recipient in config.recipients:
+        client.inboxes.messages.send(
+            inbox_id,
+            to=recipient,
+            subject=subject,
+            html=html,
+        )
 
     logging.info("Sent to %s", config.recipients)
     print(f"Email sent to: {', '.join(config.recipients)}")
-

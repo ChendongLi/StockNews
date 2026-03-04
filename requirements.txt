@@ -1,4 +1,4 @@
-feedparser
+agentmail
 python-dotenv
 anthropic
 requests
