@@ -11,9 +11,34 @@ def build_html(
     news_by_ticker: dict[str, list[dict]],
     summaries: dict[str, str],
     price_changes=None,
+    breaking_news: list[dict] | None = None,
 ) -> str:
     """Build the HTML body for the stock digest email."""
     today = datetime.now().strftime("%B %d, %Y")
+
+    # Breaking news banner
+    breaking_section = ""
+    if breaking_news:
+        item = breaking_news[0]
+        source = item.get("source", "")
+        published = item.get("published", "")
+        meta = " &bull; ".join(filter(None, [source, published]))
+        breaking_section = (
+            '<div style="background:#fef2f2;border-left:5px solid #dc2626;'
+            'padding:16px 20px;border-radius:0 10px 10px 0;margin-bottom:28px">'
+            '<p style="margin:0 0 6px;font-size:11px;font-weight:800;color:#dc2626;'
+            'text-transform:uppercase;letter-spacing:.8px">🔴 Breaking News</p>'
+            f'<a href="{item["url"]}" style="color:#1d4ed8;font-weight:700;font-size:15px;'
+            f'text-decoration:none;line-height:1.4">{item["title"]}</a>'
+            + (f'<br><span style="color:#6b7280;font-size:11px">{meta}</span>' if meta else "")
+            + (
+                f'<br><span style="color:#4b5563;font-size:13px;line-height:1.5">'
+                f'{item["description"][:280]}</span>'
+                if item.get("description") else ""
+            )
+            + '</div>'
+        )
+
     sections = ""
 
     for ticker, info in stocks.items():
@@ -56,7 +81,7 @@ def build_html(
         ) if summary else ""
 
         if not items:
-            rows = '<li style="color:#9ca3af;font-style:italic">No news available.</li>'
+            rows = '<li style="color:#9ca3af;font-style:italic">No news today.</li>'
         else:
             rows = ""
             for item in items:
@@ -105,7 +130,7 @@ def build_html(
     <h1 style="color:#fff;margin:0;font-size:24px;letter-spacing:-.3px">Daily Stock News</h1>
     <p style="color:#94a3b8;margin:6px 0 0;font-size:14px">{today} &bull; {tickers}</p>
   </div>
-  <div style="padding:36px">{sections}
+  <div style="padding:36px">{breaking_section}{sections}
     <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:8px">
       Powered by Brave Search and Claude AI
     </p>

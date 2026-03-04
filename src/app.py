@@ -7,9 +7,9 @@ from typing import Sequence
 
 from src.config import AppConfig, configure_logging
 from src.emailer import send_email
-from src.fetcher import fetch_news, fetch_price_change
+from src.fetcher import fetch_breaking_news, fetch_news, fetch_price_change
 from src.renderer import build_html
-from src.summarizer import summarize_ticker_news
+from src.summarizer import rank_breaking_news, rank_news, summarize_ticker_news
 
 
 def validate_config(config: AppConfig, test_mode: bool) -> None:
@@ -30,10 +30,23 @@ def run(argv: Sequence[str] | None = None) -> int:
     validate_config(config, test_mode=test_mode)
     logging.info("Run started%s", " [TEST]" if test_mode else "")
 
-    news_by_ticker = {
-        ticker: fetch_news(ticker, info["name"], config.brave_api_key)
-        for ticker, info in config.stocks.items()
-    }
+    print("Fetching breaking news...")
+    breaking_news = rank_breaking_news(
+        items=fetch_breaking_news(config.brave_api_key),
+        api_key=config.anthropic_api_key,
+        model=config.anthropic_model,
+    )
+
+    news_by_ticker: dict[str, list[dict]] = {}
+    for ticker, info in config.stocks.items():
+        items = fetch_news(ticker, info["name"], config.brave_api_key)
+        news_by_ticker[ticker] = rank_news(
+            items=items,
+            ticker=ticker,
+            company_name=info["name"],
+            api_key=config.anthropic_api_key,
+            model=config.anthropic_model,
+        )
 
     print("Fetching price changes...")
     price_changes = {
@@ -63,6 +76,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         news_by_ticker=news_by_ticker,
         summaries=summaries,
         price_changes=price_changes,
+        breaking_news=breaking_news,
     )
     send_email(html, config=config, test_mode=test_mode)
     return 0
