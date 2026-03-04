@@ -2,8 +2,8 @@ name: Daily Stock News
 
 on:
   schedule:
-    # 7 AM PT = 15:00 UTC, Mon–Fri
-    - cron: "0 15 * * 1-5"
+    # 7:45 AM PT = 15:45 UTC, Mon–Fri
+    - cron: "45 15 * * 1-5"
   workflow_dispatch:
     # Allow manual trigger from GitHub UI
 
