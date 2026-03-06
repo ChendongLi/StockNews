@@ -16,17 +16,9 @@ steps:
       - '--all-tags'
       - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews'
 
-  # Update Cloud Run Job image (secrets/env vars set separately at job creation)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - run
-      - jobs
-      - update
-      - stocknews
-      - '--image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:$COMMIT_SHA'
-      - '--region=us-west1'
-      - '--project=agentlens-489006'
+  # Note: Cloud Run Job image update is handled separately (see README-GCP.md)
+  # Cloud Build SA lacks run.jobs.update — grant roles/run.developer to
+  # 1056054306065-compute@developer.gserviceaccount.com to enable auto-deploy here.
 
 options:
   logging: CLOUD_LOGGING_ONLY
