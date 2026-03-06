@@ -100,6 +100,49 @@ python main.py --no-ai
   - Top 3 news links with source, date, and description
 - Powered by Brave Search + Claude AI
 
+## Deployment (GCP)
+
+Runs as a **Cloud Run Job** on GCP (`agentlens-489006`, region: `us-west1`).
+
+### Build & deploy
+```bash
+gcloud builds submit --config cloudbuild.yaml .
+```
+This builds the Docker image, pushes it to Artifact Registry, and updates the Cloud Run Job in one step.
+
+### Secrets
+```bash
+# Create/update Cloud Run Job secrets
+gcloud run jobs update stocknews \
+  --region=us-west1 \
+  --update-secrets=RECIPIENTS=RECIPIENTS:latest,AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest
+```
+
+### Check status & logs
+```bash
+# Job status
+gcloud run jobs describe stocknews --region=us-west1
+
+# Recent executions
+gcloud run jobs executions list --job=stocknews --region=us-west1
+
+# Logs from latest execution
+gcloud logging read 'resource.type="cloud_run_job" AND resource.labels.job_name="stocknews"' \
+  --project=agentlens-489006 --limit=50 --format="table(timestamp,textPayload)"
+```
+
+### Image cleanup
+Artifact Registry is configured to auto-delete images older than 2 days, keeping at minimum the most recent version. Policy file: `infra/cleanup-policy.json`.
+
+To reapply:
+```bash
+gcloud artifacts repositories set-cleanup-policies voicebuddy \
+  --project=agentlens-489006 \
+  --location=us-west1 \
+  --policy=infra/cleanup-policy.json \
+  --no-dry-run
+```
+
 ## PR Workflow
 
 All changes go through pull requests — direct commits to `main` are blocked.
