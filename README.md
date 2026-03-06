@@ -118,9 +118,12 @@ Runs as a **Cloud Run Job** on GCP (`agentlens-489006`, region: `us-west1`).
 
 ### Build & deploy
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+gcloud builds submit --config cloudbuild.yaml . \
+  --project=agentlens-489006 \
+  --substitutions=COMMIT_SHA=$(git rev-parse HEAD)
 ```
 This builds the Docker image, pushes it to Artifact Registry, and updates the Cloud Run Job in one step.
+`COMMIT_SHA` must be passed explicitly for manual submits — it's only auto-set when triggered from a GitHub push.
 
 ### Secrets
 ```bash
