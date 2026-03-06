@@ -33,9 +33,9 @@ def run(argv: Sequence[str] | None = None) -> int:
     label = " [TEST]" if test_mode else (" [NOON]" if noon_mode else "")
     logging.info("Run started%s", label)
 
-    # Noon trigger check: only run if any stock moved > ±0.5% from open
+    # Noon trigger check: only run if S&P 500 moved > ±0.5% from open
     if noon_mode:
-        should_run, reason = check_noon_trigger(list(config.stocks.keys()))
+        should_run, reason = check_noon_trigger(["^GSPC"])
         if not should_run:
             print(f"Noon trigger not met: {reason}")
             logging.info("Noon run skipped: %s", reason)
