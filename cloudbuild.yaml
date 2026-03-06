@@ -16,9 +16,16 @@ steps:
       - '--all-tags'
       - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews'
 
-  # Apply k8s manifests
+  # Apply namespace first (must exist before other resources)
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'k8s/']
+    args: ['apply', '-f', 'k8s/namespace.yaml']
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-west1-b'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=voicebuddy-standard'
+
+  # Apply cronjob (secret must be created separately via kubectl — not committed to git)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'k8s/cronjob.yaml']
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-west1-b'
       - 'CLOUDSDK_CONTAINER_CLUSTER=voicebuddy-standard'
