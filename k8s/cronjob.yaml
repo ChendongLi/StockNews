@@ -4,7 +4,7 @@ metadata:
   name: stocknews
   namespace: stocknews
 spec:
-  schedule: "0 8 * * 1-5"
+  schedule: "0 7,12 * * 1-5"
   timeZone: "America/Los_Angeles"
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
