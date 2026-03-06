@@ -175,3 +175,35 @@ def fetch_price_change(ticker):  # returns float or None
     except Exception as exc:
         logging.error("%s price change failed: %s", ticker, exc)
     return None
+
+
+def fetch_price_vs_open(ticker: str) -> float | None:
+    """Return today's price change % vs today's open price. Returns None on error."""
+    try:
+        import yfinance as yf
+        t = yf.Ticker(ticker)
+        info = t.fast_info
+        current = info.last_price
+        open_price = info.open
+        if current and open_price:
+            return round((current - open_price) / open_price * 100, 2)
+    except Exception as exc:
+        logging.error("%s price vs open failed: %s", ticker, exc)
+    return None
+
+
+def check_noon_trigger(tickers: list[str], threshold_pct: float = 0.5) -> tuple[bool, str]:
+    """Check if any ticker has moved > ±threshold_pct% from today's open.
+
+    Returns (should_run, reason_message).
+    """
+    for ticker in tickers:
+        change = fetch_price_vs_open(ticker)
+        if change is not None and abs(change) > threshold_pct:
+            direction = "+" if change > 0 else ""
+            reason = f"{ticker} is {direction}{change:.2f}% vs open (threshold ±{threshold_pct}%)"
+            logging.info("Noon trigger met: %s", reason)
+            return True, reason
+    reason = f"No ticker moved > ±{threshold_pct}% from open — skipping noon run"
+    logging.info(reason)
+    return False, reason
