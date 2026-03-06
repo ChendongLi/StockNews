@@ -28,7 +28,7 @@ StockNews/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml       # Runs on every push/PR — smoke test
-│       └── daily.yml    # Runs Mon–Fri 7 AM PT — sends email
+│       └── deploy.yml   # CD to Cloud Run (GCP auth TODO)
 ├── src/
 │   ├── app.py           # Orchestration — fetch, summarize, render, send
 │   ├── config.py        # Stock list, colors, env var loading
@@ -36,8 +36,6 @@ StockNews/
 │   ├── summarizer.py    # Claude AI analysis (HTML output)
 │   ├── renderer.py      # HTML email builder
 │   └── emailer.py       # AgentMail sender
-├── docs/
-│   └── architecture.md
 ├── main.py              # Entry point
 ├── requirements.txt
 ├── .env.example
@@ -46,7 +44,7 @@ StockNews/
 
 ## Run Schedule
 
-The daily job is triggered by **GCP Cloud Scheduler** (not GitHub Actions). The `daily.yml` workflow is disabled and only available for manual runs via the GitHub UI.
+The daily job is triggered by **GCP Cloud Scheduler** (not GitHub Actions). GitHub Actions handles CI and CD only — see `ci.yml` and `deploy.yml`.
 
 | Run | Time | Flag | Trigger |
 |-----|------|------|---------|
@@ -60,7 +58,7 @@ The noon run saves API cost on quiet market days by checking `^GSPC` current vs 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
-| `daily.yml` | Manual only (schedule disabled) | Fetches news, generates AI analysis, sends email |
+| `deploy.yml` | Push to `main` (CD not yet wired) | Build & deploy to Cloud Run via `cloudbuild.yaml` — GCP auth TODO |
 
 ### GitHub Secrets (stored encrypted, never in code)
 
