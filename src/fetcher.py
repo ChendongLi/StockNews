@@ -80,10 +80,7 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
 
 def fetch_breaking_news(brave_api_key: str) -> list[dict]:
     """Fetch top 1 macro/market breaking news headline from the past 24h."""
-    query = (
-        "stock market breaking news OR S&P 500 OR Fed interest rate OR "
-        "global economy OR Nasdaq OR recession OR inflation"
-    )
+    query = "stock market breaking news today"
     headers = {
         "X-Subscription-Token": brave_api_key,
         "Accept": "application/json",
