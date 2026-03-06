@@ -45,6 +45,15 @@ StockNews/
 └── .gitignore
 ```
 
+## Run Schedule
+
+| Run | Time | Flag | Trigger |
+|-----|------|------|---------|
+| Morning | 8 AM PT Mon–Fri | _(none)_ | Always runs |
+| Noon | 12 PM PT Mon–Fri | `--noon` | Only if S&P 500 moved ±0.5% from open |
+
+The noon run saves API cost on quiet market days by checking `^GSPC` current vs open price before doing anything else.
+
 ## CI/CD (GitHub Actions)
 
 | Workflow | Trigger | What it does |
@@ -88,6 +97,9 @@ python main.py --test
 
 # Skip AI analysis (faster, for debugging)
 python main.py --no-ai
+
+# Noon conditional run — only sends if S&P 500 moved ±0.5% from open
+python main.py --noon
 ```
 
 ## Email Design
