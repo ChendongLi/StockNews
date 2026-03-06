@@ -18,7 +18,7 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
     if ".TO" in ticker:
         query = "TSX stock market news"
     elif ticker == "QQQ":
-        query = "US stock market OR Nasdaq OR S&P 500 breaking news OR technology stocks"
+        query = "Nasdaq 100 technology stocks"
     else:
         query = f'"{company_name}" {ticker}'
     headers = {
