@@ -10,17 +10,16 @@ For each tracked stock, StockNews:
 3. Generates a short AI analysis (key theme → why it matters → bullish/bearish outlook)
 4. Sends a styled HTML email to all configured recipients
 
-## Stocks Covered (7)
+## Stocks Covered (6)
 
 | Ticker | Name | Market |
 |--------|------|--------|
 | QQQ | Invesco QQQ ETF | US Market |
 | NVDA | Nvidia | US Tech |
 | TSLA | Tesla | US Tech |
-| BABA | Alibaba | Global |
+| BABA | Alibaba | Global Market |
 | MSFT | Microsoft | US Tech |
 | BRK-B | Berkshire Hathaway | US Market |
-| XIU.TO | iShares S&P/TSX 60 ETF | 🍁 Canadian Market (CAD) |
 
 ## Project Structure
 
@@ -36,7 +35,7 @@ StockNews/
 │   ├── fetcher.py       # Brave Search API + yfinance price change
 │   ├── summarizer.py    # Claude AI analysis (HTML output)
 │   ├── renderer.py      # HTML email builder
-│   └── emailer.py       # Gmail SMTP sender
+│   └── emailer.py       # AgentMail sender
 ├── docs/
 │   └── architecture.md
 ├── main.py              # Entry point
@@ -47,9 +46,11 @@ StockNews/
 
 ## Run Schedule
 
+The daily job is triggered by **GCP Cloud Scheduler** (not GitHub Actions). The `daily.yml` workflow is disabled and only available for manual runs via the GitHub UI.
+
 | Run | Time | Flag | Trigger |
 |-----|------|------|---------|
-| Morning | 8 AM PT Mon–Fri | _(none)_ | Always runs |
+| Morning | 8 AM PT Mon–Fri | _(none)_ | Always runs (Cloud Scheduler) |
 | Noon | 12 PM PT Mon–Fri | `--noon` | Only if S&P 500 moved ±0.5% from open |
 
 The noon run saves API cost on quiet market days by checking `^GSPC` current vs open price before doing anything else.
@@ -59,14 +60,13 @@ The noon run saves API cost on quiet market days by checking `^GSPC` current vs 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
-| `daily.yml` | Mon–Fri 7 AM PT (or manual) | Fetches news, generates AI analysis, sends email |
+| `daily.yml` | Manual only (schedule disabled) | Fetches news, generates AI analysis, sends email |
 
 ### GitHub Secrets (stored encrypted, never in code)
 
 | Secret | Description |
 |--------|-------------|
-| `GMAIL_USER` | Gmail sender address |
-| `GMAIL_APP_PASSWORD` | [Gmail App Password](https://myaccount.google.com/apppasswords) |
+| `AGENTMAIL_API_KEY` | [AgentMail API key](https://agentmail.to) — used for sending email |
 | `RECIPIENTS` | Comma-separated recipient emails |
 | `ANTHROPIC_API_KEY` | [Anthropic API key](https://console.anthropic.com/settings/keys) |
 | `BRAVE_API_KEY` | [Brave Search API key](https://api.search.brave.com) (free tier: 2,000 req/month) |
