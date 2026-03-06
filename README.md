@@ -10,17 +10,16 @@ For each tracked stock, StockNews:
 3. Generates a short AI analysis (key theme → why it matters → bullish/bearish outlook)
 4. Sends a styled HTML email to all configured recipients
 
-## Stocks Covered (7)
+## Stocks Covered (6)
 
 | Ticker | Name | Market |
 |--------|------|--------|
 | QQQ | Invesco QQQ ETF | US Market |
 | NVDA | Nvidia | US Tech |
 | TSLA | Tesla | US Tech |
-| BABA | Alibaba | Global |
+| BABA | Alibaba | Global Market |
 | MSFT | Microsoft | US Tech |
 | BRK-B | Berkshire Hathaway | US Market |
-| XIU.TO | iShares S&P/TSX 60 ETF | 🍁 Canadian Market (CAD) |
 
 ## Project Structure
 
@@ -29,16 +28,14 @@ StockNews/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml       # Runs on every push/PR — smoke test
-│       └── daily.yml    # Runs Mon–Fri 7 AM PT — sends email
+│       └── deploy.yml   # CD to Cloud Run (GCP auth TODO)
 ├── src/
 │   ├── app.py           # Orchestration — fetch, summarize, render, send
 │   ├── config.py        # Stock list, colors, env var loading
 │   ├── fetcher.py       # Brave Search API + yfinance price change
 │   ├── summarizer.py    # Claude AI analysis (HTML output)
 │   ├── renderer.py      # HTML email builder
-│   └── emailer.py       # Gmail SMTP sender
-├── docs/
-│   └── architecture.md
+│   └── emailer.py       # AgentMail sender
 ├── main.py              # Entry point
 ├── requirements.txt
 ├── .env.example
@@ -47,9 +44,11 @@ StockNews/
 
 ## Run Schedule
 
+The daily job is triggered by **GCP Cloud Scheduler** (not GitHub Actions). GitHub Actions handles CI and CD only — see `ci.yml` and `deploy.yml`.
+
 | Run | Time | Flag | Trigger |
 |-----|------|------|---------|
-| Morning | 8 AM PT Mon–Fri | _(none)_ | Always runs |
+| Morning | 8 AM PT Mon–Fri | _(none)_ | Always runs (Cloud Scheduler) |
 | Noon | 12 PM PT Mon–Fri | `--noon` | Only if S&P 500 moved ±0.5% from open |
 
 The noon run saves API cost on quiet market days by checking `^GSPC` current vs open price before doing anything else.
@@ -59,14 +58,13 @@ The noon run saves API cost on quiet market days by checking `^GSPC` current vs 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
-| `daily.yml` | Mon–Fri 7 AM PT (or manual) | Fetches news, generates AI analysis, sends email |
+| `deploy.yml` | Push to `main` (CD not yet wired) | Build & deploy to Cloud Run via `cloudbuild.yaml` — GCP auth TODO |
 
 ### GitHub Secrets (stored encrypted, never in code)
 
 | Secret | Description |
 |--------|-------------|
-| `GMAIL_USER` | Gmail sender address |
-| `GMAIL_APP_PASSWORD` | [Gmail App Password](https://myaccount.google.com/apppasswords) |
+| `AGENTMAIL_API_KEY` | [AgentMail API key](https://agentmail.to) — used for sending email |
 | `RECIPIENTS` | Comma-separated recipient emails |
 | `ANTHROPIC_API_KEY` | [Anthropic API key](https://console.anthropic.com/settings/keys) |
 | `BRAVE_API_KEY` | [Brave Search API key](https://api.search.brave.com) (free tier: 2,000 req/month) |
