@@ -1,0 +1,12 @@
+[
+  {
+    "name": "keep-most-recent",
+    "action": { "type": "Keep" },
+    "mostRecentVersions": { "keepCount": 1 }
+  },
+  {
+    "name": "delete-older-than-2d",
+    "action": { "type": "Delete" },
+    "condition": { "olderThan": "172800s" }
+  }
+]
