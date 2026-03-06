@@ -131,6 +131,37 @@ def fetch_breaking_news(brave_api_key: str) -> list[dict]:
         return []
 
 
+def fetch_market_indices() -> dict:
+    """Fetch S&P 500 and TSX Composite index change %.
+    Returns dict like:
+    {
+        "sp500": {"label": "S&P 500", "change_pct": 0.83},
+        "tsx": {"label": "TSX", "change_pct": -0.21},
+    }
+    Values are None on error.
+    """
+    import yfinance as yf
+
+    indices = {
+        "sp500": {"label": "S&P 500", "ticker": "^GSPC"},
+        "tsx": {"label": "TSX", "ticker": "^GSPTSE"},
+    }
+    result = {}
+    for key, meta in indices.items():
+        try:
+            info = yf.Ticker(meta["ticker"]).fast_info
+            current = info.last_price
+            prev = info.previous_close
+            if current and prev:
+                result[key] = {"label": meta["label"], "change_pct": round((current - prev) / prev * 100, 2)}
+            else:
+                result[key] = {"label": meta["label"], "change_pct": None}
+        except Exception as exc:
+            logging.error("%s index fetch failed: %s", meta["ticker"], exc)
+            result[key] = {"label": meta["label"], "change_pct": None}
+    return result
+
+
 def fetch_price_change(ticker):  # returns float or None
     """Return today's price change % vs previous close. Returns None on error."""
     try:

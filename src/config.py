@@ -16,7 +16,6 @@ DEFAULT_STOCKS: dict[str, dict] = {
     "BABA": {"name": "Alibaba", "section": "Global Market", "currency": "USD"},
     "MSFT": {"name": "Microsoft", "section": "US Tech", "currency": "USD"},
     "BRK-B": {"name": "Berkshire Hathaway", "section": "US Market", "currency": "USD"},
-    "XIU.TO": {"name": "iShares S&P/TSX 60 ETF", "section": "Canadian Market", "currency": "CAD"},
 }
 
 DEFAULT_COLORS = {
@@ -26,7 +25,6 @@ DEFAULT_COLORS = {
     "BABA": "#f97316",
     "MSFT": "#0ea5e9",
     "BRK-B": "#ca8a04",
-    "XIU.TO": "#dc2626",
 }
 
 

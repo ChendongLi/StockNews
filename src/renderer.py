@@ -5,6 +5,29 @@ from __future__ import annotations
 from datetime import datetime
 
 
+def _render_index_bar(market_indices: dict | None) -> str:
+    """Render compact index pills for the email header."""
+    if not market_indices:
+        return ""
+    pills = []
+    for _key, data in market_indices.items():
+        label = data.get("label", "")
+        pct = data.get("change_pct")
+        if pct is not None:
+            color = "#22c55e" if pct >= 0 else "#ef4444"
+            sign = "+" if pct >= 0 else ""
+            value = f"{sign}{pct}%"
+        else:
+            color = "#94a3b8"
+            value = "N/A"
+        pills.append(
+            f'<span style="display:inline-block;background:{color}33;color:{color};'
+            f'padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;'
+            f'margin-right:8px">{label} &nbsp;{value}</span>'
+        )
+    return f'<div style="margin-top:12px">{"".join(pills)}</div>'
+
+
 def build_html(
     stocks: dict[str, dict],
     colors: dict[str, str],
@@ -12,6 +35,7 @@ def build_html(
     summaries: dict[str, str],
     price_changes=None,
     breaking_news: list[dict] | None = None,
+    market_indices: dict | None = None,
 ) -> str:
     """Build the HTML body for the stock digest email."""
     today = datetime.now().strftime("%B %d, %Y")
@@ -118,7 +142,6 @@ def build_html(
             "</div>"
         )
 
-    tickers = " · ".join(stocks.keys())
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -128,7 +151,8 @@ def build_html(
   box-shadow:0 4px 16px rgba(0,0,0,.10);overflow:hidden">
   <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 36px">
     <h1 style="color:#fff;margin:0;font-size:24px;letter-spacing:-.3px">Daily Stock News</h1>
-    <p style="color:#94a3b8;margin:6px 0 0;font-size:14px">{today} &bull; {tickers}</p>
+    <p style="color:#94a3b8;margin:6px 0 0;font-size:14px">{today}</p>
+    {_render_index_bar(market_indices)}
   </div>
   <div style="padding:36px">{breaking_section}{sections}
     <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:8px">

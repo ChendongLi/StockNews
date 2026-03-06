@@ -7,7 +7,7 @@ from typing import Sequence
 
 from src.config import AppConfig, configure_logging
 from src.emailer import send_email
-from src.fetcher import fetch_breaking_news, fetch_news, fetch_price_change
+from src.fetcher import fetch_breaking_news, fetch_market_indices, fetch_news, fetch_price_change
 from src.renderer import build_html
 from src.summarizer import rank_breaking_news, rank_news, summarize_ticker_news
 
@@ -54,6 +54,9 @@ def run(argv: Sequence[str] | None = None) -> int:
         for ticker in config.stocks
     }
 
+    print("Fetching market indices...")
+    market_indices = fetch_market_indices()
+
     no_ai = "--no-ai" in args
     summaries: dict[str, str] = {}
     if no_ai:
@@ -77,6 +80,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         summaries=summaries,
         price_changes=price_changes,
         breaking_news=breaking_news,
+        market_indices=market_indices,
     )
     send_email(html, config=config, test_mode=test_mode)
     return 0
