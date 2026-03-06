@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: stocknews
+  namespace: stocknews
+spec:
+  schedule: "0 8 * * 1-5"
+  timeZone: "America/Los_Angeles"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          containers:
+            - name: stocknews
+              image: us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:latest
+              imagePullPolicy: Always
+              env:
+                - name: RECIPIENTS
+                  valueFrom:
+                    secretKeyRef:
+                      name: stocknews-secrets
+                      key: RECIPIENTS
+                - name: AGENTMAIL_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: stocknews-secrets
+                      key: AGENTMAIL_API_KEY
+                - name: ANTHROPIC_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: stocknews-secrets
+                      key: ANTHROPIC_API_KEY
+                - name: BRAVE_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: stocknews-secrets
+                      key: BRAVE_API_KEY
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+                limits:
+                  cpu: 1000m
+                  memory: 1Gi
+          restartPolicy: Never

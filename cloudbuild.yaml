@@ -1,0 +1,27 @@
+steps:
+  # Build image with commit SHA and latest tags
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:$COMMIT_SHA'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:latest'
+      - '.'
+
+  # Push all tags
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews'
+
+  # Apply k8s manifests
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'k8s/']
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-west1-b'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=voicebuddy-standard'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
