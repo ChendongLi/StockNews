@@ -10,7 +10,7 @@ from agentmail import AgentMail
 
 def send_email(html: str, config, test_mode: bool = False) -> None:
     """Send the HTML digest email via AgentMail, or print in test mode."""
-    subject = f"Daily Stock News - {datetime.now().strftime('%b %d, %Y')}"
+    subject = f"☕ Market Espresso — {datetime.now().strftime('%b %d, %Y')}"
 
     if test_mode:
         print(f"To: {', '.join(config.recipients)}")

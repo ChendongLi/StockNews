@@ -5,27 +5,53 @@ from __future__ import annotations
 from datetime import datetime
 
 
-def _render_index_bar(market_indices: dict | None) -> str:
-    """Render compact index pills for the email header."""
+def _render_index_scoreboard(market_indices: dict | None) -> str:
+    """Render a scoreboard strip for market indices in the email header."""
     if not market_indices:
         return ""
-    pills = []
-    for _key, data in market_indices.items():
+
+    cells = []
+    items = list(market_indices.items())
+    for i, (_key, data) in enumerate(items):
         label = data.get("label", "")
         pct = data.get("change_pct")
+        price = data.get("price")
+
         if pct is not None:
-            color = "#22c55e" if pct >= 0 else "#ef4444"
+            color = "#4ade80" if pct >= 0 else "#f87171"
             sign = "+" if pct >= 0 else ""
-            value = f"{sign}{pct}%"
+            arrow = "▲" if pct >= 0 else "▼"
+            pct_str = f"{arrow} {sign}{pct}%"
         else:
             color = "#94a3b8"
-            value = "N/A"
-        pills.append(
-            f'<span style="display:inline-block;background:{color}33;color:{color};'
-            f'padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;'
-            f'margin-right:8px">{label} &nbsp;{value}</span>'
+            pct_str = "N/A"
+
+        price_str = f"${price:,.2f}" if price is not None else ""
+
+        # separator between cells (not after last)
+        sep = (
+            '<td style="width:1px;background:rgba(255,255,255,0.15);padding:0 0"></td>'
+            if i < len(items) - 1 else ""
         )
-    return f'<div style="margin-top:12px">{"".join(pills)}</div>'
+
+        cells.append(
+            f'<td style="padding:14px 28px;text-align:center;width:50%">'
+            f'<div style="font-size:11px;font-weight:700;color:#c4a882;'
+            f'text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">{label}</div>'
+            f'<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:22px;'
+            f'font-weight:700;color:#fff;letter-spacing:-.3px">{price_str}</div>'
+            f'<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:15px;'
+            f'font-weight:700;color:{color};margin-top:2px">{pct_str}</div>'
+            f'</td>'
+            + sep
+        )
+
+    return (
+        '<table style="width:100%;border-collapse:collapse;margin-top:20px;'
+        'background:rgba(0,0,0,0.25);border-radius:10px;overflow:hidden">'
+        f'<tr>{"".join(cells)}</tr>'
+        '</table>'
+    )
 
 
 def build_html(
@@ -72,15 +98,19 @@ def build_html(
         items = news_by_ticker.get(ticker, [])
         summary = summaries.get(ticker, "")
 
-        change = (price_changes or {}).get(ticker)
-        if change is not None:
-            chg_color = "#16a34a" if change >= 0 else "#dc2626"
-            chg_sign = "+" if change >= 0 else ""
+        price_data = (price_changes or {}).get(ticker)
+        if price_data is not None:
+            chg = price_data.get("change_pct")
+            px = price_data.get("price")
+            chg_color = "#16a34a" if (chg or 0) >= 0 else "#dc2626"
+            chg_sign = "+" if (chg or 0) >= 0 else ""
+            px_str = f"${px:,.2f} &nbsp;" if px is not None else ""
             price_pill = (
                 f'<span style="background:{chg_color}22;color:{chg_color};'
                 f'padding:3px 9px;border-radius:10px;font-size:12px;'
-                f'font-weight:700;margin-left:8px;vertical-align:middle">'
-                f'{chg_sign}{change}%</span>'
+                f'font-weight:700;margin-left:8px;vertical-align:middle;'
+                f'font-family:Georgia,serif">'
+                f'{px_str}{chg_sign}{chg}%</span>'
             )
         else:
             price_pill = ""
@@ -149,10 +179,10 @@ def build_html(
   background:#f1f5f9;margin:0;padding:24px 16px">
 <div style="max-width:700px;margin:0 auto;background:#fff;border-radius:16px;
   box-shadow:0 4px 16px rgba(0,0,0,.10);overflow:hidden">
-  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 36px">
-    <h1 style="color:#fff;margin:0;font-size:24px;letter-spacing:-.3px">Daily Stock News</h1>
-    <p style="color:#94a3b8;margin:6px 0 0;font-size:14px">{today}</p>
-    {_render_index_bar(market_indices)}
+  <div style="background:linear-gradient(135deg,#1a0c08 0%,#3b1a0e 100%);padding:32px 36px">
+    <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:-.3px">☕ Market Espresso</h1>
+    <p style="color:#c4a882;margin:6px 0 0;font-size:13px;letter-spacing:.3px">{today}</p>
+    {_render_index_scoreboard(market_indices)}
   </div>
   <div style="padding:36px">{breaking_section}{sections}
     <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:8px">

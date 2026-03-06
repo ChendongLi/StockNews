@@ -153,17 +153,24 @@ def fetch_market_indices() -> dict:
             current = info.last_price
             prev = info.previous_close
             if current and prev:
-                result[key] = {"label": meta["label"], "change_pct": round((current - prev) / prev * 100, 2)}
+                result[key] = {
+                    "label": meta["label"],
+                    "price": round(current, 2),
+                    "change_pct": round((current - prev) / prev * 100, 2),
+                }
             else:
-                result[key] = {"label": meta["label"], "change_pct": None}
+                result[key] = {"label": meta["label"], "price": None, "change_pct": None}
         except Exception as exc:
             logging.error("%s index fetch failed: %s", meta["ticker"], exc)
-            result[key] = {"label": meta["label"], "change_pct": None}
+            result[key] = {"label": meta["label"], "price": None, "change_pct": None}
     return result
 
 
-def fetch_price_change(ticker):  # returns float or None
-    """Return today's price change % vs previous close. Returns None on error."""
+def fetch_price_change(ticker) -> dict | None:
+    """Return today's price and change % vs previous close.
+
+    Returns dict with keys ``price`` and ``change_pct``, or None on error.
+    """
     try:
         import yfinance as yf
         t = yf.Ticker(ticker)
@@ -171,7 +178,10 @@ def fetch_price_change(ticker):  # returns float or None
         current = info.last_price
         prev = info.previous_close
         if current and prev:
-            return round((current - prev) / prev * 100, 2)
+            return {
+                "price": round(current, 2),
+                "change_pct": round((current - prev) / prev * 100, 2),
+            }
     except Exception as exc:
         logging.error("%s price change failed: %s", ticker, exc)
     return None
