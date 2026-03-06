@@ -1,6 +1,6 @@
-# StockNews 📈
+# ☕ Market Espresso
 
-A daily stock news emailer that fetches relevant headlines via **Brave Search**, generates concise **AI-powered analysis**, and delivers a clean HTML email every weekday morning — fully automated via **GitHub Actions** (no local server needed).
+A daily market digest that fetches relevant headlines via **Brave Search**, generates concise **AI-powered analysis**, and delivers a clean HTML email every weekday morning — fully automated via **GitHub Actions** (no local server needed).
 
 ## What It Does
 
@@ -104,12 +104,14 @@ python main.py --noon
 
 ## Email Design
 
-- Dark gradient header with date and ticker list
+- **Espresso brown header** (`#1a0c08 → #3b1a0e`) with `☕ Market Espresso` title
+- **Index scoreboard**: S&P 500 and TSX shown with current price + ▲/▼ change % in Georgia serif
 - Per-stock section with:
-  - Color-coded ticker badge + **price change % pill** (🟢 up / 🔴 down)
+  - Color-coded ticker badge + **current price and change % pill** (🟢 up / 🔴 down)
   - Currency label (USD or CAD)
   - AI analysis box: theme, significance, outlook (~100 words)
   - Top 3 news links with source, date, and description
+- Subject line: `☕ Market Espresso — Mar 06, 2026`
 - Powered by Brave Search + Claude AI
 
 ## Deployment (GCP)
