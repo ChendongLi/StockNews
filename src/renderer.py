@@ -26,7 +26,7 @@ def _render_index_scoreboard(market_indices: dict | None) -> str:
             color = "#94a3b8"
             pct_str = "N/A"
 
-        price_str = f"${price:,.2f}" if price is not None else ""
+        price_str = f"{price:,.2f}" if price is not None else ""
 
         # separator between cells (not after last)
         sep = (
