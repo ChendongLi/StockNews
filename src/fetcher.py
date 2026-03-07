@@ -132,10 +132,11 @@ def fetch_breaking_news(brave_api_key: str) -> list[dict]:
 
 
 def fetch_market_indices() -> dict:
-    """Fetch S&P 500 and TSX Composite index change %.
+    """Fetch S&P 500, Nasdaq, and TSX Composite index change %.
     Returns dict like:
     {
         "sp500": {"label": "S&P 500", "change_pct": 0.83},
+        "nasdaq": {"label": "Nasdaq", "change_pct": 1.12},
         "tsx": {"label": "TSX", "change_pct": -0.21},
     }
     Values are None on error.
@@ -144,6 +145,7 @@ def fetch_market_indices() -> dict:
 
     indices = {
         "sp500": {"label": "S&P 500", "ticker": "^GSPC"},
+        "nasdaq": {"label": "Nasdaq", "ticker": "^IXIC"},
         "tsx": {"label": "TSX", "ticker": "^GSPTSE"},
     }
     result = {}
