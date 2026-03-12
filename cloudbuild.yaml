@@ -16,7 +16,7 @@ steps:
       - '--all-tags'
       - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews'
 
-  # Update Cloud Run Job to new image
+  # Update morning Cloud Run Job (no args — always sends)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -25,6 +25,19 @@ steps:
       - update
       - stocknews
       - '--image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:$COMMIT_SHA'
+      - '--region=us-west1'
+      - '--project=agentlens-489006'
+
+  # Update noon Cloud Run Job (--noon flag: only sends if S&P 500 moved ±0.5%)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - update
+      - stocknews-noon
+      - '--image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:$COMMIT_SHA'
+      - '--args=--noon'
       - '--region=us-west1'
       - '--project=agentlens-489006'
 

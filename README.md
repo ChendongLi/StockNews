@@ -125,12 +125,51 @@ gcloud builds submit --config cloudbuild.yaml . \
 This builds the Docker image, pushes it to Artifact Registry, and updates the Cloud Run Job in one step.
 `COMMIT_SHA` must be passed explicitly for manual submits — it's only auto-set when triggered from a GitHub push.
 
+### Cloud Run Jobs (one-time setup)
+
+Two separate Cloud Run Jobs are required — one for the morning run (no args) and one for the noon run (`--noon`). `cloudbuild.yaml` updates both jobs on every deploy.
+
+```bash
+# Morning job (created automatically by first deploy, or manually):
+gcloud run jobs create stocknews \
+  --image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:latest \
+  --region=us-west1 --project=agentlens-489006
+
+# Noon job — must be created separately with --noon arg:
+gcloud run jobs create stocknews-noon \
+  --image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:latest \
+  --args='--noon' \
+  --region=us-west1 --project=agentlens-489006
+```
+
+### Cloud Scheduler (one-time setup)
+
+```bash
+# Morning — always runs:
+gcloud scheduler jobs create http stocknews-daily \
+  --schedule="0 8 * * 1-5" --time-zone="America/Los_Angeles" \
+  --uri="https://us-west1-run.googleapis.com/v2/projects/agentlens-489006/locations/us-west1/jobs/stocknews:run" \
+  --http-method=POST --oauth-service-account-email=<SA_EMAIL> \
+  --location=us-west1 --project=agentlens-489006
+
+# Noon — triggers stocknews-noon job (which has --noon baked in):
+gcloud scheduler jobs create http stocknews-noon \
+  --schedule="0 12 * * 1-5" --time-zone="America/Los_Angeles" \
+  --uri="https://us-west1-run.googleapis.com/v2/projects/agentlens-489006/locations/us-west1/jobs/stocknews-noon:run" \
+  --http-method=POST --oauth-service-account-email=<SA_EMAIL> \
+  --location=us-west1 --project=agentlens-489006
+```
+
+> **Note:** The noon scheduler must point to `stocknews-noon:run`, NOT `stocknews:run`. The `--noon` flag is baked into the `stocknews-noon` Cloud Run Job; passing it via scheduler message body overrides is fragile and was the source of a bug where the noon job always sent regardless of market movement.
+
 ### Secrets
 ```bash
-# Create/update Cloud Run Job secrets
-gcloud run jobs update stocknews \
-  --region=us-west1 \
-  --update-secrets=RECIPIENTS=RECIPIENTS:latest,AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest
+# Apply secrets to both jobs:
+for JOB in stocknews stocknews-noon; do
+  gcloud run jobs update $JOB \
+    --region=us-west1 \
+    --update-secrets=RECIPIENTS=RECIPIENTS:latest,AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest
+done
 ```
 
 ### Check status & logs
