@@ -53,7 +53,7 @@ class AppConfig:
             stocks=DEFAULT_STOCKS,
             colors=DEFAULT_COLORS,
             recipients=recipients,
-            brave_api_key=os.getenv("BRAVE_API_KEY", "BSA5-CTjN2peswcv-cozXKUOUAKPbMZ"),
+            brave_api_key=os.getenv("BRAVE_API_KEY", ""),
             agentmail_api_key=os.getenv("AGENTMAIL_API_KEY", ""),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY", ""),
             anthropic_model=os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"),
