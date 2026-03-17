@@ -28,7 +28,6 @@ steps:
       - '--region=us-west1'
       - '--project=agentlens-489006'
       - '--set-secrets=AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest'
-      - '^,^--update-env-vars=RECIPIENTS=lichendong@gmail.com,czha0106@gmail.com'
 
   # Update noon Cloud Run Job (--noon flag: only sends if S&P 500 moved ±0.5%)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -43,7 +42,6 @@ steps:
       - '--region=us-west1'
       - '--project=agentlens-489006'
       - '--set-secrets=AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest'
-      - '^,^--update-env-vars=RECIPIENTS=lichendong@gmail.com,czha0106@gmail.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY
