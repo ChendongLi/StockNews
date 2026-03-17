@@ -12,4 +12,4 @@ RUN useradd --create-home app && mkdir -p /app/logs && chown app:app /app/logs
 USER app
 ENV LOG_FILE=/app/logs/stock_news.log
 
-CMD ["python", "main.py"]
+ENTRYPOINT ["python", "main.py"]
