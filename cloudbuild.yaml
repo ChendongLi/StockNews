@@ -16,32 +16,23 @@ steps:
       - '--all-tags'
       - 'us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews'
 
-  # Update morning Cloud Run Job (no args — always sends)
+  # Deploy morning job
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - jobs
-      - update
-      - stocknews
-      - '--image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:$COMMIT_SHA'
-      - '--region=us-west1'
-      - '--project=agentlens-489006'
-      - '--set-secrets=AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest'
+      - '-c'
+      - |
+        sed 's/COMMIT_SHA/$COMMIT_SHA/g' infra/job-morning.yaml | \
+        gcloud run jobs replace - --region=us-west1 --project=agentlens-489006
 
-  # Update noon Cloud Run Job (--noon flag: only sends if S&P 500 moved ±0.5%)
+  # Deploy noon job
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - jobs
-      - update
-      - stocknews-noon
-      - '--image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:$COMMIT_SHA'
-      - '--args=--noon'
-      - '--region=us-west1'
-      - '--project=agentlens-489006'
-      - '--set-secrets=AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest'
+      - '-c'
+      - |
+        sed 's/COMMIT_SHA/$COMMIT_SHA/g' infra/job-noon.yaml | \
+        gcloud run jobs replace - --region=us-west1 --project=agentlens-489006
 
 options:
   logging: CLOUD_LOGGING_ONLY
