@@ -1,0 +1,39 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: stocknews
+  annotations:
+    run.googleapis.com/client-name: gcloud
+spec:
+  template:
+    spec:
+      taskCount: 1
+      template:
+        spec:
+          containers:
+          - image: us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:COMMIT_SHA
+            env:
+            - name: RECIPIENTS
+              value: "lichendong@gmail.com,czha0106@gmail.com"
+            - name: AGENTMAIL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: AGENTMAIL_API_KEY
+                  key: latest
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ANTHROPIC_API_KEY
+                  key: latest
+            - name: BRAVE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: BRAVE_API_KEY
+                  key: latest
+            resources:
+              limits:
+                cpu: '1'
+                memory: 512Mi
+          maxRetries: 2
+          serviceAccountName: 1056054306065-compute@developer.gserviceaccount.com
+          timeoutSeconds: '600'
