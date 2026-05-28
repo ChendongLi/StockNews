@@ -1,73 +1,102 @@
 # ☕ Market Espresso
 
-A daily market digest that fetches relevant headlines via **Brave Search**, generates concise **AI-powered analysis**, and delivers a clean HTML email every weekday morning — fully automated via **GitHub Actions** (no local server needed).
+A daily market digest that fetches the top headline per stock via **Brave Search**, generates a concise **AI-powered paragraph**, and delivers a clean HTML email every weekday morning — fully automated on **GCP Cloud Run**.
+
+A companion **static dashboard** (hosted on GCS) shows all tracked stocks grouped by sector with expand/collapse sections.
 
 ## What It Does
 
-For each tracked stock, StockNews:
-1. Searches Brave News API for the 3 most relevant recent headlines
-2. Fetches real-time price change % vs previous close (via Yahoo Finance)
-3. Generates a short AI analysis (key theme → why it matters → bullish/bearish outlook)
-4. Sends a styled HTML email to all configured recipients
+For each tracked stock, Market Espresso:
+1. Fetches the top news headline from the past 24 hours (Brave Search API)
+2. Fetches real-time price change % vs previous close (Yahoo Finance)
+3. Generates a 40–60 word AI analysis paragraph (Bullish / Bearish / Neutral)
+4. Sends a styled HTML email — only stocks that moved **±1%** or more appear (minimum 3 always included)
+5. Uploads a full-sector dashboard to GCS for browsing all stocks
 
-## Stocks Covered (6)
+## Stocks Covered (21)
 
-| Ticker | Name | Market |
-|--------|------|--------|
-| QQQ | Invesco QQQ ETF | US Market |
-| NVDA | Nvidia | US Tech |
-| TSLA | Tesla | US Tech |
-| BABA | Alibaba | Global Market |
-| MSFT | Microsoft | US Tech |
-| BRK-B | Berkshire Hathaway | US Market |
+Configured in `stocks.yaml` at the repo root. **To add a stock: edit `stocks.yaml` and push — no code changes needed.**
+
+### 🏆 Big Mega
+| Ticker | Name |
+|--------|------|
+| AAPL | Apple |
+| GOOGL | Alphabet |
+| MSFT | Microsoft |
+| TSLA | Tesla |
+| NVDA | Nvidia |
+| AMZN | Amazon |
+| META | Meta |
+
+### ⚡ Semiconductor
+| Ticker | Name | Exchange |
+|--------|------|----------|
+| SMH | VanEck Semiconductor ETF | Nasdaq |
+| 2330.TW | TSMC | Taiwan SE (TWD) |
+| MU | Micron | Nasdaq |
+| AMD | AMD | Nasdaq |
+| INTC | Intel | Nasdaq |
+| ASML.AS | ASML Holding | Amsterdam (EUR) |
+| 005930.KS | Samsung Electronics | Korea SE (KRW) |
+| SNDK | SanDisk | Nasdaq |
+| LITE | Lumentum | Nasdaq |
+| COHR | Coherent | NYSE |
+
+### ☁️ SaaS Software
+| Ticker | Name |
+|--------|------|
+| CRM | Salesforce |
+| ADBE | Adobe |
+| NOW | ServiceNow |
+| WDAY | Workday |
 
 ## Project Structure
 
 ```
 StockNews/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml       # Runs on every push/PR — smoke test
-│       └── deploy.yml   # CD to Cloud Run (GCP auth TODO)
+├── stocks.yaml          # Stock watchlist — edit here to add/remove stocks
 ├── src/
-│   ├── app.py           # Orchestration — fetch, summarize, render, send
-│   ├── config.py        # Stock list, colors, env var loading
-│   ├── fetcher.py       # Brave Search API + yfinance price change
-│   ├── summarizer.py    # Claude AI analysis (HTML output)
-│   ├── renderer.py      # HTML email builder
+│   ├── app.py           # Orchestration — fetch, filter, summarize, render, send
+│   ├── config.py        # Loads stocks.yaml + env vars into AppConfig
+│   ├── fetcher.py       # Brave Search API + yfinance price data
+│   ├── summarizer.py    # Claude AI analysis (single combined call per stock)
+│   ├── renderer.py      # HTML email builder (sector-grouped, always visible)
+│   ├── dashboard.py     # GCS static dashboard builder + uploader
 │   └── emailer.py       # AgentMail sender
 ├── main.py              # Entry point
+├── infra/
+│   ├── job-morning.yaml # Cloud Run Job definition (morning run)
+│   └── job-noon.yaml    # Cloud Run Job definition (noon conditional run)
+├── cloudbuild.yaml      # Builds Docker image + deploys both Cloud Run Jobs
 ├── requirements.txt
-├── .env.example
-└── .gitignore
+└── .env.example
 ```
+
+## Email Filter
+
+The email only includes stocks that moved **±1%** or more vs the previous close. At least 3 stocks (the biggest movers) are always included even on quiet days.
+
+All 21 stocks are fetched every run for the dashboard — Claude summarization is only called for stocks that make the email cut (cost gate).
 
 ## Run Schedule
 
-The daily job is triggered by **GCP Cloud Scheduler** (not GitHub Actions). GitHub Actions handles CI and CD only — see `ci.yml` and `deploy.yml`.
+| Run | Time (PT) | Days | Trigger condition |
+|-----|-----------|------|-------------------|
+| Morning | 8 AM | Mon–Fri | Always runs |
+| Noon | 12 PM | Mon–Fri | Only if S&P 500 moved ±0.5% from open |
 
-| Run | Time | Flag | Trigger |
-|-----|------|------|---------|
-| Morning | 8 AM PT Mon–Fri | _(none)_ | Always runs (Cloud Scheduler) |
-| Noon | 12 PM PT Mon–Fri | `--noon` | Only if S&P 500 moved ±0.5% from open |
+## Dashboard
 
-The noon run saves API cost on quiet market days by checking `^GSPC` current vs open price before doing anything else.
+A static HTML page is generated each run and uploaded to GCS:
 
-## CI/CD (GitHub Actions)
+```
+https://storage.googleapis.com/market-espresso-dashboard/index.html
+```
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
-| `deploy.yml` | Push to `main` (CD not yet wired) | Build & deploy to Cloud Run via `cloudbuild.yaml` — GCP auth TODO |
-
-### GitHub Secrets (stored encrypted, never in code)
-
-| Secret | Description |
-|--------|-------------|
-| `AGENTMAIL_API_KEY` | [AgentMail API key](https://agentmail.to) — used for sending email |
-| `RECIPIENTS` | Comma-separated recipient emails |
-| `ANTHROPIC_API_KEY` | [Anthropic API key](https://console.anthropic.com/settings/keys) |
-| `BRAVE_API_KEY` | [Brave Search API key](https://api.search.brave.com) (free tier: 2,000 req/month) |
+- All 21 stocks grouped by sector
+- Click any sector header to collapse/expand
+- Responsive card grid (mobile-friendly)
+- Refreshes every time the morning or noon job runs
 
 ## Local Development
 
@@ -81,69 +110,63 @@ pip install -r requirements.txt
 ### 2. Configure environment
 ```bash
 cp .env.example .env
-# Fill in your credentials
+# Fill in your API keys
 ```
 
 ### 3. Run locally
 
 ```bash
-# Send live email
+# Full run — sends live email and uploads dashboard
 python main.py
 
-# Test mode — renders HTML to stdout, no email sent
+# Test mode — prints HTML to stdout, no email sent, no GCS upload
 python main.py --test
 
-# Skip AI analysis (faster, for debugging)
-python main.py --no-ai
+# Skip AI analysis (faster, for layout debugging)
+python main.py --test --no-ai
 
-# Noon conditional run — only sends if S&P 500 moved ±0.5% from open
+# Noon conditional run — only proceeds if S&P 500 moved ±0.5% from open
 python main.py --noon
 ```
 
-## Email Design
-
-- **Espresso brown header** (`#1a0c08 → #3b1a0e`) with `☕ Market Espresso` title
-- **Index scoreboard**: S&P 500 and TSX shown with current price + ▲/▼ change % in Georgia serif
-- Per-stock section with:
-  - Color-coded ticker badge + **current price and change % pill** (🟢 up / 🔴 down)
-  - Currency label (USD or CAD)
-  - AI analysis box: theme, significance, outlook (~100 words)
-  - Top 3 news links with source, date, and description
-- Subject line: `☕ Market Espresso — Mar 06, 2026`
-- Powered by Brave Search + Claude AI
-
 ## Deployment (GCP)
 
-Runs as a **Cloud Run Job** on GCP (`agentlens-489006`, region: `us-west1`).
+Runs as two **Cloud Run Jobs** on GCP (`agentlens-489006`, region: `us-west1`).
 
 ### Build & deploy
 ```bash
-gcloud builds submit --config cloudbuild.yaml . \
+gcloud builds submit . --config=cloudbuild.yaml \
   --project=agentlens-489006 \
   --substitutions=COMMIT_SHA=$(git rev-parse HEAD)
 ```
-This builds the Docker image, pushes it to Artifact Registry, and updates the Cloud Run Job in one step.
-`COMMIT_SHA` must be passed explicitly for manual submits — it's only auto-set when triggered from a GitHub push.
 
-### Cloud Run Jobs (one-time setup)
+Builds the Docker image, pushes to Artifact Registry, and updates both Cloud Run Jobs (`stocknews` and `stocknews-noon`) in one step.
 
-Two separate Cloud Run Jobs are required — one for the morning run (no args) and one for the noon run (`--noon`). `cloudbuild.yaml` updates both jobs on every deploy.
+### Environment variables (set in infra/job-*.yaml)
 
+| Variable | Description |
+|----------|-------------|
+| `RECIPIENTS` | Comma-separated recipient emails |
+| `GCS_DASHBOARD_BUCKET` | GCS bucket for dashboard upload (`market-espresso-dashboard`) |
+| `GCS_DASHBOARD_PATH` | Object path within bucket (default: `index.html`) |
+
+### Secrets (fetched from Secret Manager at runtime)
+
+| Secret | Description |
+|--------|-------------|
+| `AGENTMAIL_API_KEY` | [AgentMail](https://agentmail.to) — email sending |
+| `ANTHROPIC_API_KEY` | [Anthropic](https://console.anthropic.com/settings/keys) — Claude AI |
+| `BRAVE_API_KEY` | [Brave Search](https://api.search.brave.com) — news headlines (free: 2,000 req/month) |
+
+### GCS dashboard setup (one-time)
 ```bash
-# Morning job (created automatically by first deploy, or manually):
-gcloud run jobs create stocknews \
-  --image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:latest \
-  --region=us-west1 --project=agentlens-489006
-
-# Noon job — must be created separately with --noon arg:
-gcloud run jobs create stocknews-noon \
-  --image=us-west1-docker.pkg.dev/agentlens-489006/voicebuddy/stocknews:latest \
-  --args='--noon' \
-  --region=us-west1 --project=agentlens-489006
+gsutil mb -p agentlens-489006 -l us-west1 gs://market-espresso-dashboard
+gsutil uniformbucketlevelaccess set on gs://market-espresso-dashboard
+gsutil iam ch allUsers:objectViewer gs://market-espresso-dashboard
+gsutil iam ch serviceAccount:1056054306065-compute@developer.gserviceaccount.com:objectAdmin gs://market-espresso-dashboard
 ```
 
 ### Cloud Scheduler (one-time setup)
-
 ```bash
 # Morning — always runs:
 gcloud scheduler jobs create http stocknews-daily \
@@ -152,7 +175,7 @@ gcloud scheduler jobs create http stocknews-daily \
   --http-method=POST --oauth-service-account-email=<SA_EMAIL> \
   --location=us-west1 --project=agentlens-489006
 
-# Noon — triggers stocknews-noon job (which has --noon baked in):
+# Noon — triggers stocknews-noon job (--noon flag is baked in):
 gcloud scheduler jobs create http stocknews-noon \
   --schedule="0 12 * * 1-5" --time-zone="America/Los_Angeles" \
   --uri="https://us-west1-run.googleapis.com/v2/projects/agentlens-489006/locations/us-west1/jobs/stocknews-noon:run" \
@@ -160,48 +183,30 @@ gcloud scheduler jobs create http stocknews-noon \
   --location=us-west1 --project=agentlens-489006
 ```
 
-> **Note:** The noon scheduler must point to `stocknews-noon:run`, NOT `stocknews:run`. The `--noon` flag is baked into the `stocknews-noon` Cloud Run Job; passing it via scheduler message body overrides is fragile and was the source of a bug where the noon job always sent regardless of market movement.
-
-### Secrets
-```bash
-# Apply secrets to both jobs:
-for JOB in stocknews stocknews-noon; do
-  gcloud run jobs update $JOB \
-    --region=us-west1 \
-    --update-secrets=RECIPIENTS=RECIPIENTS:latest,AGENTMAIL_API_KEY=AGENTMAIL_API_KEY:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,BRAVE_API_KEY=BRAVE_API_KEY:latest
-done
-```
-
 ### Check status & logs
 ```bash
-# Job status
-gcloud run jobs describe stocknews --region=us-west1
-
 # Recent executions
 gcloud run jobs executions list --job=stocknews --region=us-west1
 
-# Logs from latest execution
+# Logs from an execution
 gcloud logging read 'resource.type="cloud_run_job" AND resource.labels.job_name="stocknews"' \
   --project=agentlens-489006 --limit=50 --format="table(timestamp,textPayload)"
 ```
 
 ### Image cleanup
-Artifact Registry is configured to auto-delete images older than 2 days, keeping at minimum the most recent version. Policy file: `infra/cleanup-policy.json`.
+Artifact Registry auto-deletes images older than 2 days. Policy: `infra/cleanup-policy.json`.
 
-To reapply:
 ```bash
 gcloud artifacts repositories set-cleanup-policies voicebuddy \
-  --project=agentlens-489006 \
-  --location=us-west1 \
-  --policy=infra/cleanup-policy.json \
-  --no-dry-run
+  --project=agentlens-489006 --location=us-west1 \
+  --policy=infra/cleanup-policy.json --no-dry-run
 ```
 
 ## PR Workflow
 
-All changes go through pull requests — direct commits to `main` are blocked.
+All changes go through pull requests — direct commits to `main` are not allowed.
 
-1. Changes are made on a feature branch
-2. A PR is opened with a description of what changed
-3. CI must pass (smoke test)
-4. Owner approves → merges
+1. Create a feature branch (`feat/`, `fix/`, `chore/` prefix)
+2. Open a PR with description of what changed and how to test
+3. CI smoke test must pass
+4. Merge to `main` → manually trigger Cloud Build deploy

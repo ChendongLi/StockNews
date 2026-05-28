@@ -13,7 +13,7 @@ from src.fetcher import fetch_breaking_news, fetch_market_indices, fetch_news, f
 from src.renderer import build_html
 from src.summarizer import rank_breaking_news, rank_and_summarize
 
-EMAIL_PRICE_THRESHOLD = 0.5  # ±% move to qualify a stock for the email
+EMAIL_PRICE_THRESHOLD = 1.0  # ±% move to qualify a stock for the email
 
 
 def validate_config(config: AppConfig, test_mode: bool) -> None:
