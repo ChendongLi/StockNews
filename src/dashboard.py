@@ -125,17 +125,21 @@ def build_dashboard_html(
             )
 
         sections_html += (
-            f'<section style="margin-bottom:48px">'
+            f'<details open style="margin-bottom:36px">'
+            f'<summary style="list-style:none;cursor:pointer;user-select:none">'
             f'<div style="background:{header_bg};color:#fff;'
-            f'padding:12px 20px;border-radius:10px;margin-bottom:20px;'
+            f'padding:12px 20px;border-radius:10px;margin-bottom:4px;'
             f'display:flex;align-items:center;gap:10px">'
             f'<span style="font-size:18px">{icon}</span>'
             f'<span style="font-size:17px;font-weight:700">{section_name}</span>'
             f'<span style="font-size:12px;color:rgba(255,255,255,0.6);margin-left:auto">'
-            f'{len(tickers)} stocks</span>'
+            f'{len(tickers)} stocks · click to collapse</span>'
             f'</div>'
+            f'</summary>'
+            f'<div style="padding-top:16px">'
             f'<div class="grid">{cards}</div>'
-            f'</section>'
+            f'</div>'
+            f'</details>'
         )
 
     scoreboard = _render_index_scoreboard(market_indices)
@@ -156,6 +160,8 @@ def build_dashboard_html(
   @media(min-width:900px){{.grid{{grid-template-columns:repeat(3,1fr)}}}}
   .card{{transition:box-shadow .15s}}
   .card:hover{{box-shadow:0 4px 20px rgba(0,0,0,.10)}}
+  details summary::-webkit-details-marker{{display:none}}
+  details summary{{list-style:none}}
 </style>
 </head>
 <body>
