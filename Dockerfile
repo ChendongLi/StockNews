@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ src/
 COPY main.py .
+COPY stocks.yaml .
 
 RUN useradd --create-home app && mkdir -p /app/logs && chown app:app /app/logs
 USER app
