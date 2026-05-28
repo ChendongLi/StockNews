@@ -10,13 +10,20 @@ import requests
 BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/news/search"
 
 
-def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 5) -> list[dict]:
-    """Fetch latest news for a ticker via Brave Search API.
+def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 1) -> list[dict]:
+    """Fetch the top news item for a ticker via Brave Search API.
 
-    Uses freshness="pd" (past day) and returns up to ``limit`` items.
+    Requests 3 candidates from Brave (for freshness-filter headroom) and
+    returns up to ``limit`` items after the 24-hour cutoff filter.
     """
     if ".TO" in ticker:
         query = "TSX stock market news"
+    elif ".KS" in ticker:
+        query = f'"{company_name}" semiconductor stock news'
+    elif ".AS" in ticker:
+        query = f'"{company_name}" stock news'
+    elif ".TW" in ticker:
+        query = f'"{company_name}" semiconductor stock news'
     elif ticker == "QQQ":
         query = "US stock market OR Nasdaq OR S&P 500 breaking news OR technology stocks"
     else:
@@ -30,14 +37,14 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
         resp = requests.get(
             BRAVE_SEARCH_URL,
             headers=headers,
-            params={"q": query, "count": 5, "freshness": "pd", "country": "us"},
+            params={"q": query, "count": 3, "freshness": "pd", "country": "us"},
             timeout=10,
         )
         resp.raise_for_status()
         results = resp.json().get("results", [])
 
         items = []
-        for r in results[:limit]:
+        for r in results:
             meta_url = r.get("meta_url") or {}
             items.append(
                 {
@@ -72,7 +79,7 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
             item.pop("page_age", None)
 
         logging.info("%s: %s items (freshness=pd)", ticker, len(filtered))
-        return filtered
+        return filtered[:limit]
     except Exception as exc:
         logging.error("%s fetch failed (freshness=pd): %s", ticker, exc)
         return []
