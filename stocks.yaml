@@ -1,0 +1,139 @@
+# stocks.yaml — Stock watchlist configuration
+# To add a stock: append an entry below, commit, and push.
+# Cloud Build will redeploy automatically — no code changes needed.
+#
+# Fields:
+#   ticker:   Exchange symbol (e.g. AAPL, 2330.TW, ASML.AS, 005930.KS)
+#   name:     Display name
+#   section:  "Big Mega" | "Semiconductor" | "SaaS Software"
+#   currency: ISO currency code (USD, TWD, EUR, KRW, ...)
+#   color:    Hex color for badge and accent
+
+# ── Big Mega ──────────────────────────────────────────────────────────────────
+- ticker: AAPL
+  name: Apple
+  section: Big Mega
+  currency: USD
+  color: "#1d1d1f"
+
+- ticker: GOOGL
+  name: Alphabet
+  section: Big Mega
+  currency: USD
+  color: "#4285F4"
+
+- ticker: MSFT
+  name: Microsoft
+  section: Big Mega
+  currency: USD
+  color: "#0078D4"
+
+- ticker: TSLA
+  name: Tesla
+  section: Big Mega
+  currency: USD
+  color: "#e31937"
+
+- ticker: NVDA
+  name: Nvidia
+  section: Big Mega
+  currency: USD
+  color: "#76b900"
+
+- ticker: AMZN
+  name: Amazon
+  section: Big Mega
+  currency: USD
+  color: "#ff9900"
+
+- ticker: META
+  name: Meta
+  section: Big Mega
+  currency: USD
+  color: "#0668E1"
+
+# ── Semiconductor ─────────────────────────────────────────────────────────────
+- ticker: SMH
+  name: VanEck Semiconductor ETF
+  section: Semiconductor
+  currency: USD
+  color: "#7c3aed"
+
+- ticker: 2330.TW
+  name: TSMC
+  section: Semiconductor
+  currency: TWD
+  color: "#6d28d9"
+
+- ticker: MU
+  name: Micron
+  section: Semiconductor
+  currency: USD
+  color: "#0369a1"
+
+- ticker: AMD
+  name: AMD
+  section: Semiconductor
+  currency: USD
+  color: "#ed1c24"
+
+- ticker: INTC
+  name: Intel
+  section: Semiconductor
+  currency: USD
+  color: "#1e40af"
+
+- ticker: ASML.AS
+  name: ASML Holding
+  section: Semiconductor
+  currency: EUR
+  color: "#f97316"
+
+- ticker: 005930.KS
+  name: Samsung Electronics
+  section: Semiconductor
+  currency: KRW
+  color: "#1428a0"
+
+- ticker: SNDK
+  name: SanDisk
+  section: Semiconductor
+  currency: USD
+  color: "#d97706"
+
+- ticker: LITE
+  name: Lumentum
+  section: Semiconductor
+  currency: USD
+  color: "#0891b2"
+
+- ticker: COHR
+  name: Coherent
+  section: Semiconductor
+  currency: USD
+  color: "#0e7490"
+
+# ── SaaS Software ─────────────────────────────────────────────────────────────
+- ticker: CRM
+  name: Salesforce
+  section: SaaS Software
+  currency: USD
+  color: "#0ea5e9"
+
+- ticker: ADBE
+  name: Adobe
+  section: SaaS Software
+  currency: USD
+  color: "#e11d48"
+
+- ticker: NOW
+  name: ServiceNow
+  section: SaaS Software
+  currency: USD
+  color: "#10b981"
+
+- ticker: WDAY
+  name: Workday
+  section: SaaS Software
+  currency: USD
+  color: "#059669"

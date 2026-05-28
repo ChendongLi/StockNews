@@ -7,25 +7,29 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
 from dotenv import load_dotenv
 
-DEFAULT_STOCKS: dict[str, dict] = {
-    "QQQ": {"name": "Invesco QQQ ETF", "section": "US Market", "currency": "USD"},
-    "NVDA": {"name": "Nvidia", "section": "US Tech", "currency": "USD"},
-    "TSLA": {"name": "Tesla", "section": "US Tech", "currency": "USD"},
-    "BABA": {"name": "Alibaba", "section": "Global Market", "currency": "USD"},
-    "MSFT": {"name": "Microsoft", "section": "US Tech", "currency": "USD"},
-    "BRK-B": {"name": "Berkshire Hathaway", "section": "US Market", "currency": "USD"},
-}
 
-DEFAULT_COLORS = {
-    "QQQ": "#6366f1",
-    "NVDA": "#22c55e",
-    "TSLA": "#ef4444",
-    "BABA": "#f97316",
-    "MSFT": "#0ea5e9",
-    "BRK-B": "#ca8a04",
-}
+def load_stocks(path: str | Path = "stocks.yaml") -> tuple[dict, dict]:
+    """Load stocks and colors from a YAML file.
+
+    Returns (stocks_dict, colors_dict) where stocks_dict maps ticker →
+    {name, section, currency} and colors_dict maps ticker → hex string.
+    """
+    data = yaml.safe_load(Path(path).read_text())
+    stocks: dict[str, dict] = {}
+    colors: dict[str, str] = {}
+    for entry in data:
+        ticker = entry["ticker"]
+        stocks[ticker] = {
+            "name": entry["name"],
+            "section": entry["section"],
+            "currency": entry.get("currency", "USD"),
+        }
+        if "color" in entry:
+            colors[ticker] = entry["color"]
+    return stocks, colors
 
 
 @dataclass
@@ -40,6 +44,8 @@ class AppConfig:
     anthropic_api_key: str
     anthropic_model: str
     log_file: str
+    gcs_bucket: str = ""
+    gcs_dashboard_path: str = "index.html"
 
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -49,15 +55,20 @@ class AppConfig:
         recipients_raw = os.getenv("RECIPIENTS") or os.getenv("RECIPIENT_EMAIL", "")
         recipients = [item.strip() for item in recipients_raw.split(",") if item.strip()]
 
+        stocks_path = os.getenv("STOCKS_CONFIG_PATH", "stocks.yaml")
+        stocks, colors = load_stocks(stocks_path)
+
         return cls(
-            stocks=DEFAULT_STOCKS,
-            colors=DEFAULT_COLORS,
+            stocks=stocks,
+            colors=colors,
             recipients=recipients,
             brave_api_key=os.getenv("BRAVE_API_KEY", ""),
             agentmail_api_key=os.getenv("AGENTMAIL_API_KEY", ""),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY", ""),
             anthropic_model=os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"),
             log_file=os.getenv("LOG_FILE", "logs/stock_news.log"),
+            gcs_bucket=os.getenv("GCS_DASHBOARD_BUCKET", ""),
+            gcs_dashboard_path=os.getenv("GCS_DASHBOARD_PATH", "index.html"),
         )
 
 
