@@ -211,26 +211,18 @@ def build_html(
             f'{len(tickers_in_section)} stock{"s" if len(tickers_in_section) != 1 else ""} today</span>'
         )
 
-        # Big Mega starts open; other sections start collapsed
-        open_attr = " open" if section_idx == 0 else ""
-        arrow_open = "▼"
-        arrow_closed = "▶"
-        # Use CSS to flip the arrow based on open state — inline fallback for Gmail
-        summary_style = (
-            "cursor:pointer;list-style:none;padding:14px 0 10px;"
-            "font-size:15px;font-weight:700;color:#0f172a;"
-            "border-bottom:2px solid #e2e8f0;margin-bottom:20px;"
-            "display:flex;align-items:center"
-        )
+        icon = {"Big Mega": "🏆", "Semiconductor": "⚡", "SaaS Software": "☁️"}.get(section_name, "📊")
+        bg = {"Big Mega": "#1a0c08", "Semiconductor": "#1e1b4b", "SaaS Software": "#022c22"}.get(section_name, "#0f172a")
 
         sections_html += (
-            f'<details{open_attr} style="margin-bottom:8px">'
-            f'<summary style="{summary_style}">'
-            f'<span style="margin-right:8px">{arrow_open if section_idx == 0 else arrow_closed}</span>'
-            f'{section_name}{count_label}'
-            f'</summary>'
-            f'<div style="padding-top:4px">{stock_blocks}</div>'
-            f'</details>'
+            f'<div style="margin-bottom:36px">'
+            f'<div style="background:{bg};color:#fff;padding:12px 20px;'
+            f'border-radius:10px;margin-bottom:20px;'
+            f'font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">'
+            f'<span>{icon}</span>{section_name}{count_label}'
+            f'</div>'
+            f'{stock_blocks}'
+            f'</div>'
         )
 
     # Dashboard CTA button
@@ -248,10 +240,7 @@ def build_html(
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-details summary::-webkit-details-marker {{ display:none; }}
-details[open] summary span:first-child {{ content:"▼"; }}
-</style>
+
 </head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
   background:#f1f5f9;margin:0;padding:24px 16px">
