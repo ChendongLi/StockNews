@@ -46,6 +46,7 @@ class AppConfig:
     log_file: str
     gcs_bucket: str = ""
     gcs_dashboard_path: str = "index.html"
+    email_price_threshold: float = 1.0
 
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -58,6 +59,11 @@ class AppConfig:
         stocks_path = os.getenv("STOCKS_CONFIG_PATH", "stocks.yaml")
         stocks, colors = load_stocks(stocks_path)
 
+        try:
+            threshold = float(os.getenv("EMAIL_PRICE_THRESHOLD", "1.0"))
+        except ValueError:
+            threshold = 1.0
+
         return cls(
             stocks=stocks,
             colors=colors,
@@ -69,6 +75,7 @@ class AppConfig:
             log_file=os.getenv("LOG_FILE", "logs/stock_news.log"),
             gcs_bucket=os.getenv("GCS_DASHBOARD_BUCKET", ""),
             gcs_dashboard_path=os.getenv("GCS_DASHBOARD_PATH", "index.html"),
+            email_price_threshold=threshold,
         )
 
 

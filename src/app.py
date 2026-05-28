@@ -13,9 +13,6 @@ from src.fetcher import fetch_breaking_news, fetch_market_indices, fetch_news, f
 from src.renderer import build_html
 from src.summarizer import rank_breaking_news, rank_and_summarize
 
-EMAIL_PRICE_THRESHOLD = 0.5  # ±% move to qualify a stock for the email
-
-
 def validate_config(config: AppConfig, test_mode: bool) -> None:
     """Validate required settings before running."""
     if not config.recipients:
@@ -89,9 +86,9 @@ def run(argv: Sequence[str] | None = None) -> int:
     market_indices = fetch_market_indices()
 
     # Determine which stocks appear in the email
-    email_tickers = select_email_tickers(config.stocks, price_changes)
+    email_tickers = select_email_tickers(config.stocks, price_changes, threshold_pct=config.email_price_threshold)
     print(f"Email filter: {len(email_tickers)}/{len(config.stocks)} stocks qualify "
-          f"(threshold ±{EMAIL_PRICE_THRESHOLD}%, min 3)")
+          f"(threshold ±{config.email_price_threshold}%, min 3)")
 
     # AI summaries only for email-qualifying stocks (cost gate)
     summaries: dict[str, str] = {}
