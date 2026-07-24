@@ -40,6 +40,7 @@ class AppConfig:
     colors: dict[str, str]
     recipients: list[str]
     brave_api_key: str
+    finnhub_api_key: str
     agentmail_api_key: str
     anthropic_api_key: str
     anthropic_model: str
@@ -63,6 +64,7 @@ class AppConfig:
             colors=colors,
             recipients=recipients,
             brave_api_key=os.getenv("BRAVE_API_KEY", ""),
+            finnhub_api_key=os.getenv("FINNHUB_API_KEY", ""),
             agentmail_api_key=os.getenv("AGENTMAIL_API_KEY", ""),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY", ""),
             anthropic_model=os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"),

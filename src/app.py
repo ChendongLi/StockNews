@@ -78,7 +78,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     else:
         print("Fetching breaking news...")
         breaking_news = rank_breaking_news(
-            items=fetch_breaking_news(config.brave_api_key),
+            items=fetch_breaking_news(config.brave_api_key, config.finnhub_api_key),
             api_key=config.anthropic_api_key,
             model=config.anthropic_model,
         )
@@ -87,7 +87,9 @@ def run(argv: Sequence[str] | None = None) -> int:
         print(f"Fetching news for {len(config.stocks)} stocks...")
         news_by_ticker = {}
         for ticker, info in config.stocks.items():
-            news_by_ticker[ticker] = fetch_news(ticker, info["name"], config.brave_api_key)
+            news_by_ticker[ticker] = fetch_news(
+                ticker, info["name"], config.brave_api_key, config.finnhub_api_key
+            )
 
     print("Fetching price changes...")
     price_changes = {ticker: fetch_price_change(ticker) for ticker in config.stocks}

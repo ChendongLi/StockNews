@@ -1,4 +1,4 @@
-"""News fetching utilities using Brave Search API."""
+"""News fetching utilities using Finnhub (primary) and Brave Search (fallback)."""
 
 from __future__ import annotations
 
@@ -8,14 +8,101 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/news/search"
+FINNHUB_COMPANY_NEWS_URL = "https://finnhub.io/api/v1/company-news"
+FINNHUB_GENERAL_NEWS_URL = "https://finnhub.io/api/v1/news"
 
 
-def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 1) -> list[dict]:
-    """Fetch the top news item for a ticker via Brave Search API.
+def _finnhub_filter_and_format(results: list[dict], limit: int) -> list[dict]:
+    """Sort Finnhub articles by recency, apply the 24h cutoff, and map to our shape."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    items: list[dict] = []
+    for r in sorted(results, key=lambda x: x.get("datetime", 0), reverse=True):
+        ts = r.get("datetime")
+        if not ts:
+            continue
+        published_dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+        if published_dt < cutoff:
+            continue
+        items.append(
+            {
+                "title": r.get("headline", ""),
+                "url": r.get("url", "#"),
+                "description": r.get("summary", ""),
+                "published": published_dt.strftime("%Y-%m-%dT%H:%M"),
+                "source": r.get("source", ""),
+                "extra_snippets": [],
+            }
+        )
+        if len(items) >= limit:
+            break
+    return items
 
-    Requests 3 candidates from Brave (for freshness-filter headroom) and
-    returns up to ``limit`` items after the 24-hour cutoff filter.
+
+def _fetch_news_finnhub(ticker: str, finnhub_api_key: str, limit: int) -> list[dict] | None:
+    """Fetch company news from Finnhub. Returns None on failure/empty so the caller falls back to Brave.
+
+    Finnhub's free tier only covers US-listed symbols — non-US tickers
+    (e.g. ``2330.TW``, ``ASML.AS``, ``005930.KS``) return 403 and fall
+    through to Brave automatically.
     """
+    today = datetime.now(timezone.utc).date()
+    frm = today - timedelta(days=2)
+    try:
+        resp = requests.get(
+            FINNHUB_COMPANY_NEWS_URL,
+            params={
+                "symbol": ticker,
+                "from": frm.isoformat(),
+                "to": today.isoformat(),
+                "token": finnhub_api_key,
+            },
+            timeout=10,
+        )
+        resp.raise_for_status()
+        results = resp.json()
+        if not isinstance(results, list) or not results:
+            return None
+        return _finnhub_filter_and_format(results, limit) or None
+    except Exception as exc:
+        logging.warning("%s Finnhub company-news failed, falling back to Brave: %s", ticker, exc)
+        return None
+
+
+def _fetch_breaking_news_finnhub(finnhub_api_key: str, limit: int) -> list[dict] | None:
+    """Fetch general market news from Finnhub. Returns None on failure/empty so the caller falls back to Brave."""
+    try:
+        resp = requests.get(
+            FINNHUB_GENERAL_NEWS_URL,
+            params={"category": "general", "token": finnhub_api_key},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        results = resp.json()
+        if not isinstance(results, list) or not results:
+            return None
+        return _finnhub_filter_and_format(results, limit) or None
+    except Exception as exc:
+        logging.warning("Finnhub general news failed, falling back to Brave: %s", exc)
+        return None
+
+
+def fetch_news(
+    ticker: str,
+    company_name: str,
+    brave_api_key: str,
+    finnhub_api_key: str = "",
+    limit: int = 1,
+) -> list[dict]:
+    """Fetch the top news item for a ticker, trying Finnhub before Brave Search.
+
+    Requests 3 candidates (for freshness-filter headroom) and returns up to
+    ``limit`` items after the 24-hour cutoff filter.
+    """
+    if finnhub_api_key:
+        items = _fetch_news_finnhub(ticker, finnhub_api_key, limit=max(limit, 3))
+        if items:
+            logging.info("%s: %s items (finnhub)", ticker, len(items))
+            return items[:limit]
     if ".TO" in ticker:
         query = "TSX stock market news"
     elif ".KS" in ticker:
@@ -85,8 +172,14 @@ def fetch_news(ticker: str, company_name: str, brave_api_key: str, limit: int = 
         return []
 
 
-def fetch_breaking_news(brave_api_key: str) -> list[dict]:
-    """Fetch top 1 macro/market breaking news headline from the past 24h."""
+def fetch_breaking_news(brave_api_key: str, finnhub_api_key: str = "") -> list[dict]:
+    """Fetch macro/market breaking news candidates from the past 24h, trying Finnhub before Brave Search."""
+    if finnhub_api_key:
+        items = _fetch_breaking_news_finnhub(finnhub_api_key, limit=5)
+        if items:
+            logging.info("Breaking news: %s candidates (finnhub)", len(items))
+            return items
+
     query = (
         "stock market breaking news OR S&P 500 OR Fed interest rate OR "
         "global economy OR Nasdaq OR recession OR inflation"
