@@ -32,6 +32,11 @@ spec:
                 secretKeyRef:
                   name: BRAVE_API_KEY
                   key: latest
+            - name: FINNHUB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: FINNHUB_API_KEY
+                  key: latest
             - name: GCS_DASHBOARD_BUCKET
               value: "market-espresso-dashboard"
             - name: GCS_DASHBOARD_PATH
