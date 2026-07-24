@@ -69,18 +69,25 @@ def run(argv: Sequence[str] | None = None) -> int:
             return 0
         print(f"Noon trigger met: {reason}")
 
-    print("Fetching breaking news...")
-    breaking_news = rank_breaking_news(
-        items=fetch_breaking_news(config.brave_api_key),
-        api_key=config.anthropic_api_key,
-        model=config.anthropic_model,
-    )
+    if test_mode:
+        # --test is used by CI's smoke test on every push/PR — never spend
+        # real Brave Search quota just to verify the app runs end-to-end.
+        print("Test mode: skipping Brave Search calls (breaking news + per-stock news)")
+        breaking_news: list[dict] = []
+        news_by_ticker: dict[str, list[dict]] = {ticker: [] for ticker in config.stocks}
+    else:
+        print("Fetching breaking news...")
+        breaking_news = rank_breaking_news(
+            items=fetch_breaking_news(config.brave_api_key),
+            api_key=config.anthropic_api_key,
+            model=config.anthropic_model,
+        )
 
-    # Fetch news and prices for ALL stocks (needed for dashboard + price filter)
-    print(f"Fetching news for {len(config.stocks)} stocks...")
-    news_by_ticker: dict[str, list[dict]] = {}
-    for ticker, info in config.stocks.items():
-        news_by_ticker[ticker] = fetch_news(ticker, info["name"], config.brave_api_key)
+        # Fetch news for ALL stocks (needed for dashboard + price filter)
+        print(f"Fetching news for {len(config.stocks)} stocks...")
+        news_by_ticker = {}
+        for ticker, info in config.stocks.items():
+            news_by_ticker[ticker] = fetch_news(ticker, info["name"], config.brave_api_key)
 
     print("Fetching price changes...")
     price_changes = {ticker: fetch_price_change(ticker) for ticker in config.stocks}
