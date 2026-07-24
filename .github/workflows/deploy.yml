@@ -10,23 +10,27 @@ jobs:
     name: Build & Deploy
     runs-on: ubuntu-latest
 
-    # TODO: Uncomment and configure GCP auth before enabling
-    # steps:
-    #   - name: Checkout code
-    #     uses: actions/checkout@v4
-    #
-    #   - name: Authenticate to GCP
-    #     uses: google-github-actions/auth@v2
-    #     with:
-    #       credentials_json: ${{ secrets.GCP_SA_KEY }}
-    #
-    #   - name: Set up Cloud SDK
-    #     uses: google-github-actions/setup-gcloud@v2
-    #
-    #   - name: Build & deploy via Cloud Build
-    #     run: gcloud builds submit --config cloudbuild.yaml .
-    #     working-directory: .
-
     steps:
-      - name: Placeholder — CD not yet configured
-        run: echo "CD to Cloud Run not yet wired up. See TODO comments above."
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: agentlens-489006
+
+      # Builds the image and runs `gcloud run jobs replace` for both the
+      # morning and noon Cloud Run Jobs (cloudbuild.yaml). This only updates
+      # each job's definition/image — it does NOT execute the job, so no
+      # email is sent and no Brave/Anthropic calls happen as part of deploy.
+      # Actual runs are still driven solely by Cloud Scheduler.
+      - name: Build & deploy via Cloud Build
+        run: |
+          gcloud builds submit --config cloudbuild.yaml . \
+            --project=agentlens-489006 \
+            --substitutions=COMMIT_SHA=${{ github.sha }}

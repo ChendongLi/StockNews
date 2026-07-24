@@ -58,7 +58,9 @@ The noon run saves API cost on quiet market days by checking `^GSPC` current vs 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `ci.yml` | Push / PR to `main` | Installs deps, runs `--test --no-ai` smoke test |
-| `deploy.yml` | Push to `main` (CD not yet wired) | Build & deploy to Cloud Run via `cloudbuild.yaml` — GCP auth TODO |
+| `deploy.yml` | Push to `main` | Builds the image and updates both Cloud Run Jobs via `cloudbuild.yaml` |
+
+> **Note:** `--test` mode skips real Brave Search calls entirely (see `src/app.py`) so every CI run doesn't burn from the 2,000 req/month free-tier quota — a prior bug where CI hit the real API on every push/PR exhausted the whole month's quota in a single day of PR activity, which is why production runs briefly showed "No news today" for every stock.
 
 ### GitHub Secrets (stored encrypted, never in code)
 
@@ -66,8 +68,9 @@ The noon run saves API cost on quiet market days by checking `^GSPC` current vs 
 |--------|-------------|
 | `AGENTMAIL_API_KEY` | [AgentMail API key](https://agentmail.to) — used for sending email |
 | `RECIPIENTS` | Comma-separated recipient emails |
-| `ANTHROPIC_API_KEY` | [Anthropic API key](https://console.anthropic.com/settings/keys) |
-| `BRAVE_API_KEY` | [Brave Search API key](https://api.search.brave.com) (free tier: 2,000 req/month) |
+| `GCP_SA_KEY` | Service account JSON key used by `deploy.yml` to auth to GCP (`gcloud builds submit`). Needs Cloud Build Editor, Cloud Run Admin, Artifact Registry Writer, and Service Account User roles on `agentlens-489006`. |
+
+`ANTHROPIC_API_KEY` and `BRAVE_API_KEY` are no longer needed as GitHub Secrets — CI's smoke test doesn't call either API. The real Cloud Run Jobs still pull them from **GCP Secret Manager** (see `infra/job-morning.yaml` / `infra/job-noon.yaml`), which is unaffected.
 
 ## Local Development
 
@@ -117,6 +120,10 @@ python main.py --noon
 Runs as a **Cloud Run Job** on GCP (`agentlens-489006`, region: `us-west1`).
 
 ### Build & deploy
+
+Automatic: every push to `main` triggers `deploy.yml`, which runs the build below via GitHub Actions. This only updates each Cloud Run Job's image/definition (`gcloud run jobs replace`) — it does **not** execute the job, so no email is sent and no Brave/Anthropic quota is spent as part of deploying. Actual runs are still driven solely by Cloud Scheduler (see Run Schedule above).
+
+Manual (fallback, e.g. to redeploy without a new commit):
 ```bash
 gcloud builds submit --config cloudbuild.yaml . \
   --project=agentlens-489006 \
