@@ -39,6 +39,8 @@ spec:
               value: "market-espresso-dashboard"
             - name: GCS_DASHBOARD_PATH
               value: "index.html"
+            - name: EMAIL_PRICE_THRESHOLD
+              value: "1.0"
             resources:
               limits:
                 cpu: '1'
